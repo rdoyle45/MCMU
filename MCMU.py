@@ -313,29 +313,15 @@ def com_uncert(startsec, linelist):
         # Adding uncertainty input to data set
         uncert_set.append(uncert)
 
-    # Nitrogen Uncertainty set
-    ##uncert_set = [0.05,0.2,0.2,0.2,0.1,0.3,0.25,0.26,0.4,0.35,0.35,0.35,0.4,0.3,0.25,0.3,0.3,0.3,
-      #            0.4,0.33,0.05,0.05,0.05,0.06]
-
-    # Biagi 8 uncertainty
-    #uncert_set = []
-    #uncert_set.append(0.01)
-   # for i in range(1,51):
-       # uncert_set.append(0.1)
-
-   # uncert_set.append(0.05)
-
-   # print(uncert_set)
-
     return uncert_set
 
 
 # Generating a set amount of numbers from a lognormal distribution of specified parameters
 def lognorm(uncert_set):
-    # Distribution Parameters ( MEan and Variance)
+    # Distribution Parameters ( Mean and Variance)
     mean = 1
     lognorm_set = []
-    num_values = 1000
+    num_values = int(input('How many perturbation values would you like? '))
 
     for i in range(len(uncert_set)):
         var = (uncert_set[i])**2
