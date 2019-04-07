@@ -1,7 +1,10 @@
 ﻿Monte-Carlo Morris Uncertainty (MCMU) - Version 1.0 - Build Date 09:10 am 27/03/2019
+######################################################################################
 
+For seemless execution, MCMU.py must be ran from the same directory as 
+bolsig_run_script.dat and bolsigminus.exe.
 
-####################################################################################
+######################################################################################
 
 This project aims to develop programs capable of analysing the uncertainty in 
 low-temperature plasma physics cross-section 
