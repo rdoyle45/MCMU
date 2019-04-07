@@ -13,11 +13,11 @@ from scipy import stats
 
 
 __author__ = "Rhys Doyle"
-__copyright__ = "Copyright 2018, LTP Uncertainty Calculator"
+__copyright__ = "Copyright 2019, LTP Uncertainty Calculator, MCMU"
 __credits__ = ["Prof. Miles Turner", "Dublin City University"]
 __maintainer__ = "Rhys Doyle"
 __email__ = "rhys.doyle45@mail.dcu.ie"
-__status__ = "Testing"
+__status__ = "Build Complete"
 
 
 def run_program():
