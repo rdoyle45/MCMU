@@ -1,7 +1,7 @@
 from os import getcwd, chdir, makedirs, listdir, remove
 from os.path import join, exists
 from numpy import random as rd, empty, format_float_scientific as f_f, zeros, nonzero, divide, sqrt, seterr
-from math import sqrt, log
+from math import log
 from tempfile import NamedTemporaryFile as NTF
 from subprocess import Popen
 from matplotlib import pyplot as plt
@@ -313,12 +313,26 @@ def com_uncert(startsec, linelist):
         # Adding uncertainty input to data set
         uncert_set.append(uncert)
 
+    # Nitrogen Uncertainty set
+    ##uncert_set = [0.05,0.2,0.2,0.2,0.1,0.3,0.25,0.26,0.4,0.35,0.35,0.35,0.4,0.3,0.25,0.3,0.3,0.3,
+      #            0.4,0.33,0.05,0.05,0.05,0.06]
+
+    # Biagi 8 uncertainty
+    #uncert_set = []
+    #uncert_set.append(0.01)
+   # for i in range(1,51):
+       # uncert_set.append(0.1)
+
+   # uncert_set.append(0.05)
+
+   # print(uncert_set)
+
     return uncert_set
 
 
 # Generating a set amount of numbers from a lognormal distribution of specified parameters
 def lognorm(uncert_set):
-    # Distribution Parameters ( Mean and Variance)
+    # Distribution Parameters ( MEan and Variance)
     mean = 1
     lognorm_set = []
     num_values = int(input('How many perturbation values would you like? '))
@@ -1091,16 +1105,16 @@ def Morris():
 
     logging.info('All BOLSIG simulations complete')
 
-    mean, std, energy = morris_stats(inputfiles, sample_set, delta, num_EN_val, num_params)
+    mean, std, energy, coef_names = morris_stats(inputfiles, sample_set, delta, num_EN_val, num_params)
 
     logging.info('Statistics completed')
 
-    print_stats(mean, std, energy, cwd2, dataset_name)
+    print_stats(mean, std, energy, cwd2, dataset_name, coef_names)
 
     logging.info('Stats file created')
     logging.info('Normalising Stats')
 
-    normal_stats(mean, std, energy, dataset_name)
+    normal_stats(mean, std, energy, dataset_name, coef_names)
 
     logging.info('Stats Normalised')
 
@@ -1632,6 +1646,12 @@ def morris_stats(file_list, sample_set, delta, num_EN_val, num_params):
     mob_start = 0
     diff_start = 0
     ion_start = 0
+    excite_1 = 0
+    excite_2 = 0
+    excite_3 = 0
+    ex_pass = 100000000
+    coef_names = ['Mobility', '\nDiffusion Coef.', '\nIonisation coef.', '\n1st Excitation', '\n2nd Excitation',
+                  '\n3rd Excitation']
 
     mean = {}
     std = {}
@@ -1677,12 +1697,24 @@ def morris_stats(file_list, sample_set, delta, num_EN_val, num_params):
 
                     elif file_1[j].find('Total ionization freq.') != -1:
                         ion_start = j
+                        ex_pass = j
+
+                    elif file_1[j].find('C2') != -1 and j > ex_pass:
+                        excite_1 = j
+                        print(file_1[excite_1])
+
+                    elif file_1[j].find('C3') != -1 and j > ex_pass:
+                        excite_2 = j
+
+                    elif file_1[j].find('C4') != -1 and j > ex_pass:
+                        excite_3 = j
                         break
 
                     else:
                         continue
 
-            for stat, stat_name in zip([mob_start, diff_start, ion_start], ['mob', 'dif', 'ion']):
+            for stat, stat_name in zip([mob_start, diff_start, ion_start, (excite_1+1), (excite_2+1), (excite_3+1)],
+                                       coef_names):
 
                 # Iterating through each line of mobility data
                 for k in range(num_EN_val):
@@ -1752,26 +1784,24 @@ def morris_stats(file_list, sample_set, delta, num_EN_val, num_params):
                             stat_std[k, value_loc] = s
 
     # Final calculation for STD
-    for name in ['mob', 'dif', 'ion']:
+    for name in coef_names:
         std[name] = sqrt(divide(std[name], (len(sample_set) - 1)))
 
-    return mean, std, energy
+    return mean, std, energy, coef_names
 
 
-def print_stats(mean_stats, std_stats, energy, cwd, dataset):
+def print_stats(mean_stats, std_stats, energy, cwd, dataset, coef_names):
 
     chdir(cwd)
 
     # Creating a file contain the calculated data
     with open('stats.txt', 'w', encoding='utf8') as f:
 
-        coef_names = ['Mobility', '\nDiffusion Coef.', '\nIonisation coef.']
-
         # Iterate over all transport coefficients
-        for keys, name in zip(mean_stats, coef_names):
+        for name in coef_names:
 
-            mean = mean_stats[keys]
-            std = std_stats[keys]
+            mean = mean_stats[name]
+            std = std_stats[name]
 
             f.write(name + '\n\n')
 
@@ -1810,18 +1840,16 @@ def print_stats(mean_stats, std_stats, energy, cwd, dataset):
                 f.write('\n')
 
 
-def normal_stats(mean_stats, std_stats, energy, dataset):
+def normal_stats(mean_stats, std_stats, energy, dataset, coef_names):
 
     # Creating a file contain the calculated data
     with open('norm_stats.txt', 'w', encoding='utf8') as f:
 
-        coef_names = ['Mobility', '\nDiffusion Coef.', '\nIonisation coef.']
-
         # Iterate over all transport coefficients
-        for keys, name in zip(mean_stats, coef_names):
+        for name in coef_names:
 
-            mean = mean_stats[keys]
-            std = std_stats[keys]
+            mean = mean_stats[name]
+            std = std_stats[name]
 
             seterr(divide='ignore', invalid='ignore')
             mean = mean / mean.sum(axis=1)[:, None]
@@ -1858,6 +1886,7 @@ def normal_stats(mean_stats, std_stats, energy, dataset):
                 for j in range(len(dataset)):
                     f.write(f_f(float(std[i, j]), precision=3, unique=False) + '          ')
                 f.write('\n')
+
 
 
 run_program()
