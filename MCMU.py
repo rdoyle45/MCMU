@@ -305,27 +305,9 @@ def com_uncert(startsec, linelist):
     for i in range(0, (len(startsec))):
         # Line data lists
         x = startsec[i]
-
-        # uncert = 0.1
-
-        # Experimental uncertainty in that cross section - USING ARBITRARY UNCERTAINTY FOR TESTING PURPOSES
         uncert = float(input("What is the uncertainty for " + str(linelist[x]) + ", " + str(linelist[x + 1]) + ":"))
         # Adding uncertainty input to data set
         uncert_set.append(uncert)
-
-    # Nitrogen Uncertainty set
-    ##uncert_set = [0.05,0.2,0.2,0.2,0.1,0.3,0.25,0.26,0.4,0.35,0.35,0.35,0.4,0.3,0.25,0.3,0.3,0.3,
-      #            0.4,0.33,0.05,0.05,0.05,0.06]
-
-    # Biagi 8 uncertainty
-    #uncert_set = []
-    #uncert_set.append(0.01)
-   # for i in range(1,51):
-       # uncert_set.append(0.1)
-
-   # uncert_set.append(0.05)
-
-   # print(uncert_set)
 
     return uncert_set
 
@@ -1298,27 +1280,12 @@ def com_uncert_morris(startsec, linelist):
     for i in range(0, (len(startsec))):
         # Line data lists
         x = startsec[i]
-
-        #uncert = 0.1
-
-        # Experimental uncertainty in that cross section - USING ARBITRARY UNCERTAINTY FOR TESTING PURPOSES
+        # Experimental uncertainty in that cross section
         uncert = float(input("What is the uncertainty for " + str(linelist[x]) + ", " + str(linelist[x + 1]) + ":"))
         # Adding uncertainty input to data set
         uncert_set.append(uncert)
 
         energy.append(linelist[x+2])
-
-    # Nitrogen Uncertainty set
-   # uncert_set = [0.05, 0.2, 0.2, 0.2, 0.1, 0.3, 0.25, 0.26, 0.4, 0.35, 0.35, 0.35, 0.4, 0.3, 0.25, 0.3, 0.3, 0.3,
-                 # 0.4, 0.33, 0.05, 0.05, 0.05, 0.06]
-
-    # Biagi 8 uncertainty
-    # uncert_set = []
-    # uncert_set.append(0.01)
-    # for i in range(1,51):
-    #    uncert_set.append(0.1)
-
-    # uncert_set.append(0.05)
 
     return uncert_set, energy
 
