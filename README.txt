@@ -12,7 +12,7 @@ and their relationship with transport
 coefficients.
 
 
-This program relies on the use of the program BOLSIG+ all right reserved by 
+This program relies on the use of the program BOLSIG+ all rights reserved by 
 Gerjan Hagelaar of the Laboratoire Plasma et 
 Conversion d’Energie (LAPLACE)
 
