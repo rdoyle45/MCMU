@@ -1,49 +1,60 @@
 from os import getcwd, chdir, makedirs, listdir, remove
 from os.path import join, exists
 from numpy import random as rd, empty, format_float_scientific as f_f, zeros, nonzero, divide, sqrt, seterr
-from math import log
+from math import log, ceil
 from tempfile import NamedTemporaryFile as NTF
-from subprocess import Popen
+from subprocess import Popen, DEVNULL
 from matplotlib import pyplot as plt
 from shutil import rmtree
 import time
 import logging
 from random import randint, shuffle
 from scipy import stats
-
+import glob
+from concurrent import futures
+from multiprocessing import cpu_count
+from sys import argv
+from progress.bar import Bar
 
 __author__ = "Rhys Doyle"
-__copyright__ = "Copyright 2019, LTP Uncertainty Calculator, MCMU"
+__copyright__ = "Copyright 2018, LTP Uncertainty Calculator"
 __credits__ = ["Prof. Miles Turner", "Dublin City University"]
 __maintainer__ = "Rhys Doyle"
 __email__ = "rhys.doyle45@mail.dcu.ie"
-__status__ = "Build Complete"
+__status__ = "Testing"
 
 
 def run_program():
 
-    program = input('What program would you like to run? (1:Monte-Carlo, 2:Morris) ')
-    i = 0
+    with open(str(argv[1]), 'r') as f:
 
-    while i == 0:
+        lines = f.readlines()
 
-        if program == '1':
+    program = lines[9].split()[2]
+    subject = lines[10].split()[2]
+    data = lines[11].split()[2]
+    uncert_set = lines[12].split()[2::]
+    runs = int(lines[13].split()[2])
+    species = lines[14].split()[2]
+    num_EN_values = int(lines[15].split()[2])
+    bolsig = lines[16].split()[2]
 
-            i = 1
-            Monte_carlo()
+    try:
+        num_cpus = int(lines[17].split()[2])
+    except ValueError:
+        num_cpus = cpu_count()
 
-        elif program == '2':
+    p_values = int(lines[20].split()[2])
+    if program == '1':
+        Monte_carlo(subject, data, uncert_set, runs, species, num_EN_values, bolsig, num_cpus)
+    elif program == '2':
+        Morris(subject, data, uncert_set, runs, species, num_EN_values, bolsig, num_cpus, p_values)
+    else:
+        print("A valid program code was not written in your input file. Please check and try again.")
 
-            i = 1
-            Morris()
+    return
 
-        else:
-
-            print('You did not enter a valid input. Please try again.')
-            program = input('What program would you like to run? (1:Monte-Carlo, 2:Morris) ')
-
-
-"""  
+"""
 
 Monte-Carlo Simulation Code:
 
@@ -54,13 +65,13 @@ Monte-Carlo Simulation Code:
 
 
 # Run function for Monte-Carlo simulations
-def Monte_carlo():
+def Monte_carlo(subject, data, uncert_set, runs, species, num_EN_values, bolsig, num_cpus):
 
     start = time.time()
 
     og_cwd = getcwd()
 
-    cwd, data = changedir(getcwd())
+    cwd = changedir(og_cwd, subject)
 
     cwd2 = join(cwd, 'Monte-Carlo')
 
@@ -78,47 +89,42 @@ def Monte_carlo():
     logging.basicConfig(filename=join(cwd2, "program.log"), filemode='w', level=logging.DEBUG,
                         format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p')
 
-    file = data_set(data)
+    linelist = data_set(data)
 
-    items = wordlist()
-
-    startsec, dashsec, linelist = search_set(file, items)
+    startsec, dashsec  = search_set(linelist)
 
     com_format(startsec, dashsec, linelist, data)
 
-    file = data_set(data)
+    linelist = data_set(data)
 
-    startsec, dashsec, linelist = search_set(file, items)
+    startsec, dashsec  = search_set(linelist)
 
     commsec = comment_sec(startsec, dashsec, linelist)
 
-    uncert_set = com_uncert(startsec, linelist)
-
-    lognorm_set, num_values = lognorm(uncert_set)
+    lognorm_set = lognorm(uncert_set, runs)
 
     cs_data = find_num(startsec, dashsec, linelist)
 
-    inputfiles = data_edit(cs_data, lognorm_set, data, cwd, dashsec, num_values, commsec, cwd2)
+    inputdir = data_edit(cs_data, lognorm_set, data, cwd, dashsec, runs, commsec, cwd2)
 
     logging.info('Data files edited')
 
-    runfilelist, outputfilelist, num_en = bolsig_file(inputfiles, cwd2, og_cwd)
+    outputdir = bolsig_file(inputdir, cwd2, og_cwd, species, num_EN_values)
 
     logging.info('BOLSIG run files created')
     logging.info('BOLSIG- running')
 
-    outputdir = bolsig_minus(runfilelist, cwd2, og_cwd)
+    bolsig_minus(cwd2, bolsig, num_cpus)
 
     logging.info('BOLSIG- completed')
 
-    red_e_field, gen_mat, e_loss_dict, rate_dict, name_rate, name_energy, titlelist, num_e = \
-        output_file_read(outputfilelist, outputdir, startsec, num_values, num_en)
+    red_e_field, gen_mat, e_loss_dict, rate_dict, name_rate, name_energy, titlelist, num_e = output_file_read(outputdir, startsec, runs, num_EN_values)
 
-    stats = gen_stats(gen_mat, num_values)
+    stats = gen_stats(gen_mat, runs)
 
-    rate_stats = rate_cof(rate_dict, name_rate, num_values, num_e)
+    rate_stats = rate_cof(rate_dict, name_rate, runs, num_e)
 
-    e_loss_stats = energy_loss(e_loss_dict, name_energy, num_values, num_e)
+    e_loss_stats = energy_loss(e_loss_dict, name_energy, runs, num_e)
 
     logging.info('Stats Generated')
 
@@ -126,7 +132,7 @@ def Monte_carlo():
 
     logging.info('Stats file created')
 
-    graphing_data(red_e_field, stats, rate_stats, e_loss_stats, name_rate, name_energy)
+#    graphing_data(red_e_field, stats, rate_stats, e_loss_stats, name_rate, name_energy)
 
     end = time.time()
 
@@ -134,44 +140,33 @@ def Monte_carlo():
 
 
 # Changing directory for data sets
-def changedir(path):
-    # requesting data file location within main directory
-    subject = str(input("Please enter the path to your data location. "))
+def changedir(path, subject):
 
     # Changing main directory to above location
     chdir(join(path, subject))
     # Displaying new main directory
     cwd = getcwd()
-    print(cwd)
 
-    # Prompt for data filename
-    data = str(input("Please enter the full file name. "))
-
-    return cwd, data
+    return cwd
 
 
 # Importing data file to program
 def data_set(data):
     # Opening data file in a Read/Write capacity
-    file = open(data, "r+", encoding='utf8')
+    with open(data, "r+", encoding='utf8') as datafile:
 
-    return file
+        # split the file content into lines and save a list
+        linelist = datafile.read().splitlines()
 
-
-# Creating list of words to search for
-def wordlist():
-    # global items
-
-    items = ['EXCITATION', 'ELASTIC', 'IONIZATION', 'EFFECTIVE', 'ROTATIONAL', 'ATTACHMENT']
-    print(items)
-
-    return items
+    return linelist
 
 
 # Searching Data set for locations of COMMENT lines of different Cross Sections
-def search_set(a, j):
-    # split the file content into lines and save a list
-    linelist = a.read().splitlines()
+def search_set(linelist):
+
+    # Section words
+    items = ['EXCITATION', 'ELASTIC', 'IONIZATION', 'EFFECTIVE', 'ROTATIONAL', 'ATTACHMENT']
+
     # Find how many lines in the data set
     x = len(linelist)
     # Initial value
@@ -187,23 +182,17 @@ def search_set(a, j):
         line = str(linelist[y:y + 1])
 
         # Looking for the beginning of a data set
-        if any(word in line for word in j):
-
+        if any(word in line for word in items):
             startsec.append(y)
-
             y += 1
-
         # Looking for the Column section
         elif line.find('---------------') != -1:
-
             dashsec.append(y)
-
             y += 1
         else:
-
             y += 1
 
-    return startsec, dashsec, linelist
+    return startsec, dashsec
 
 
 # FUnction to search for Comment sections and add those that do not have them
@@ -214,37 +203,28 @@ def com_format(startsec, dashsec, linelist, data):
 
     # Loop to check is the data set has comment sections
     for i in range(0, (len(startsec))):
-
         x = startsec[i]
         y = dashsec[i * 2]
 
         while x <= y:
-
             line = str(linelist[x:x + 1])
 
             # checking line for the word comment
             if line.find('COMMENT:') != -1:
-
                 x += 1
                 break
-
             # If comment isn't present checking for param.:
             elif line.find('PARAM.:') != -1:
-
                 p_location = x
                 x += 1
-
             # Continuation of loop
             else:
                 x += 1
 
             # If no COMMENT: was found this will store the location of PARAM.:
             if x == y:
-
                 paramline.append(p_location)
-
             else:
-
                 continue
 
     # Writing changes to the existing file
@@ -253,17 +233,14 @@ def com_format(startsec, dashsec, linelist, data):
 
         # This will add a comment line after param.: to any data set without one
         if i in paramline:
-
             out_file.append(linelist[i] + '\nCOMMENT:\n')
-
         else:
-
             out_file.append(linelist[i] + '\n')
 
-    print(out_file)
     with open(data, 'w', encoding='utf-8') as f:
         f.writelines(out_file)
 
+    return
 
 # Function to collect all comment sections
 def comment_sec(startsec, dashsec, linelist):
@@ -277,50 +254,28 @@ def comment_sec(startsec, dashsec, linelist):
         y = dashsec[i * 2]
 
         while x <= y:
-
             line = str(linelist[x:x + 1])
 
             # Looking for comment in the selected line
             if line.find('COMMENT:') != -1:
-
                 # If the word comment was found storing the line number
                 commsec.append(x)
                 x += 1
                 break
-
             else:
-
                 x += 1
 
     return commsec
 
 
-# Editing the data file to add the uncertainty on each cross section to the COMMENT section the the CS
-def com_uncert(startsec, linelist):
-
-    # Array to store the uncertainties of each data set as inputted below
-    uncert_set = []
-
-    # For loop to edit each cross section
-    for i in range(0, (len(startsec))):
-        # Line data lists
-        x = startsec[i]
-        uncert = float(input("What is the uncertainty for " + str(linelist[x]) + ", " + str(linelist[x + 1]) + ":"))
-        # Adding uncertainty input to data set
-        uncert_set.append(uncert)
-
-    return uncert_set
-
-
 # Generating a set amount of numbers from a lognormal distribution of specified parameters
-def lognorm(uncert_set):
+def lognorm(uncert_set, num_values):
     # Distribution Parameters ( MEan and Variance)
     mean = 1
     lognorm_set = []
-    num_values = int(input('How many perturbation values would you like? '))
 
     for i in range(len(uncert_set)):
-        var = (uncert_set[i])**2
+        var = (float(uncert_set[i]))**2
 
         # Calcualting std from a specified formula
         sigma = sqrt(log(1 + (var / (mean ** 2))))
@@ -329,11 +284,9 @@ def lognorm(uncert_set):
 
         # Gemerating the random numbers
         uncert = rd.lognormal(mu, sigma, num_values)
-        # uncert = ones(num_values)
-
         lognorm_set.append(uncert)
 
-    return lognorm_set, num_values
+    return lognorm_set
 
 
 # Finding and extracting each individual data set
@@ -341,8 +294,10 @@ def find_num(startsec, dashsec, linelist):
     # Dictionary to collect the data for each Cross Section
     cs_data = {}
 
+    progressbar = Bar('Extracting Data ', max=len(startsec), suffix='%(percent)d%%')
+
     # Iteratively adding to the above dictionary
-    for i in range(0, len(startsec)):
+    for i in range(len(startsec)):
         cs_name = linelist[startsec[i] + 1]
         cs_start = dashsec[i * 2] + 1
         cs_end = dashsec[(i * 2) + 1]
@@ -350,6 +305,9 @@ def find_num(startsec, dashsec, linelist):
         cs_set = linelist[cs_start:cs_end]
 
         cs_data[(str(cs_name) + ", No." + str(i))] = cs_set
+
+        progressbar.next()
+    progressbar.finish()
 
     return cs_data
 
@@ -366,8 +324,10 @@ def data_edit(cs_data, lognorm_set, oldfile, cwd, dashsec, num_uncert, comsec, c
     cwd3 = join(cwd2, 'Input Files')
     makedirs(cwd3)
 
+    progressbar = Bar('Generating Datasets ', max=num_uncert, suffix='%(percent)d%%')
+
     # For loop for each random number
-    for j in range(0, num_uncert):
+    for j in range(num_uncert):
 
         # Reseting the variables
         cross_values = reset.copy()
@@ -379,7 +339,6 @@ def data_edit(cs_data, lognorm_set, oldfile, cwd, dashsec, num_uncert, comsec, c
 
         # Iterating over each set of Cross section data
         for i in range(len(cross_values)):
-
             # Selecting 1 set of data at a time
             dataset = cross_values[i].copy()
 
@@ -414,15 +373,14 @@ def data_edit(cs_data, lognorm_set, oldfile, cwd, dashsec, num_uncert, comsec, c
             new_file.write("%s\n" % item)
 
         new_file.close()
+        progressbar.next()
+    progressbar.finish()
 
-    newfilelist = listdir(cwd3)
-    print(newfilelist)
-
-    return newfilelist
+    return cwd3
 
 
 # Creating the input file for Bolsig minus
-def bolsig_file(filename, cwd, og_cwd):
+def bolsig_file(inputdir, cwd, og_cwd, species_name, num_EN_values):
     # Making a directory for the run files for Bolsig
     makedirs('BOLSIG Run Files')
 
@@ -438,41 +396,30 @@ def bolsig_file(filename, cwd, og_cwd):
     species = 0
     num_EN_loc = 0
 
-    inputdir = str(cwd) + '\\Input Files\\'
+    outputdir = str(cwd) + "/Output_Files"
+    makedirs(outputdir)
 
     # Loop to find were in the file the input and output filenames go
     for i in range(len(linelist)):
 
         # Finding the Input filename
         if linelist[i].find('/ File ') != -1:
-
             inputlocation = i
-
         elif linelist[i].find('/ Species') != -1:
-
             species = i
-
         elif linelist[i].find('/ Output File ') != -1:
-
             outputlocation = i
-
         elif linelist[i].find('/ Number') != -1:
-
             num_EN_loc = i
 
-    # Creating an array for the runfile names
-    runfilelist = []
-    output_filelist = []
-
-    species_name = str(input('What species is being studied? '))
-    num_EN_values = int(input('How many E/N values would you like? '))
+    dir_list = listdir(inputdir)
+    progressbar = Bar('Creating Run Files ', max=len(dir_list), suffix='%(percent)d%%')
 
     # Creating a run file for each data file
-    for x in range(len(filename)):
+    for inputfile in dir_list:
 
-        runfilename = ('run_' + str(x) + '.dat')
-
-        runfile = ('BOLSIG Run Files\\' + runfilename)
+        runfilename = ('run_' + inputfile)
+        runfile = ('BOLSIG Run Files/' + runfilename)
 
         # Opening the runfile in a writable capacity
         with open(runfile, 'w', encoding='utf8') as f:
@@ -482,68 +429,45 @@ def bolsig_file(filename, cwd, og_cwd):
             for j in range(len(linelist)):
 
                 if j == inputlocation:
-
-                    f.write(('\"' + inputdir + filename[x] + '\"' + '    / File\n'))
-
+                    f.write(('\"' + inputdir + "/" + inputfile + '\"' + '    / File\n'))
                 elif j == outputlocation:
-
-                    output_filename = ('output_' + filename[x])
-
-                    # Updating the list of output file names
-                    output_filelist.append(output_filename)
-
-                    f.write((output_filename + '    / Output File\n'))
-
+                    f.write(('\"' + outputdir + '/output_' + inputfile + '\"' + '      / Output File\n'))
                 elif j == species:
-
                     f.write((species_name + '    / Species\n'))
-
                 elif j == num_EN_loc:
-
                     f.write((str(num_EN_values) + '    / Number\n'))
-
                 else:
-
                     f.write(linelist[j] + '\n')
 
-        # Updating the list with the name of the run file
-        runfilelist.append(runfilename)
-
-    return runfilelist, output_filelist, num_EN_values
-
-
-# Function to Run BOLSIG-
-def bolsig_minus(runfilelist, cwd, og_cwd):
-    # Create a new output directory
-    outdir = 'Output Files'
-
-    makedirs(outdir)
-    # Specify the location of BOLSIG-
-    bolsig = ("\"" + str(og_cwd) + "\\bolsigminus.exe\"")
-
-    print(bolsig)
-
-    # Specify the output directory
-    outputdir = str(cwd) + '\\Output Files'
-
-    # Iteratively create each put file through BOLSIG-
-    for i in range(len(runfilelist)):
-        # Specify the input file location
-        infile = ("\"" + str(cwd) + "\\BOLSIG Run Files\\\"" + str(runfilelist[i]))
-
-        # Temporary file allowing for Popen to run
-        f = NTF('w', suffix='.txt', delete=True, encoding='utf-8')
-
-        # Run BOLSIG-
-        r = Popen("%s %s" % (bolsig, infile), stdout=f, cwd=outputdir)
-        # Wait for BOLSIG- to complete
-        Popen.wait(r)
+        progressbar.next()
+    progressbar.finish()
 
     return outputdir
 
 
+# Function to Run BOLSIG-
+def bolsig_minus(cwd, bolsig, num_cpus):
+
+    # Gets list of runfiles
+    infile_list = glob.glob(str(cwd)+"/BOLSIG Run Files/run*")
+
+    progressbar = Bar('Running BOLSIG- ', max=len(infile_list), suffix='%(percent)d%%')
+
+    # Function that will execute BOLSIG-
+    def solver(infiles):
+        proc = Popen([bolsig, infiles], stdout=DEVNULL)
+        proc.wait()
+        progressbar.next()
+
+    with futures.ThreadPoolExecutor(max_workers=num_cpus) as execute_solver:
+        execute_solver.map(solver, infile_list)
+
+    progressbar.finish()
+    return
+
 # Read all output files and extract data
-def output_file_read(outputfilelist, outputdir, startsec, num_values, num_e):
+def output_file_read(outputdir, startsec, num_values, num_e):
+
     # List of data set title to be searched for
     titlelist = ['Electric field / N (Td)', 'Mobility *N (1/m/V/s)',
                  'Diffusion coefficient *N (1/m/s)',
@@ -573,130 +497,91 @@ def output_file_read(outputfilelist, outputdir, startsec, num_values, num_e):
     rate_dict = {}
     e_loss_dict = {}
 
+    outfile_list = glob.glob(outputdir + "/output*")
+
     # Loop to extract the outputted data from each file
-    for i in range(len(outputfilelist)):
+    for outputfile, i in zip(outfile_list, range(len(outfile_list))):
 
         # Initial conditions for later
         r = 0
         e = 0
-
         name_rate.clear()
         name_energy.clear()
 
         # Opening each data file to be checked
-        with open((outputdir + '\\' + outputfilelist[i]), 'r', encoding='utf-8') as f:
-
+        with open(outputfile, 'r', encoding='utf-8') as f:
             # extracting each line from the file and listing it to be searched
             linelist = f.read().splitlines()
 
         # Iterating over the list of lines
         for j in range(len(linelist)):
-
             # CHecking for the phrase specified above
             if linelist[j].find(titlelist[0]) != -1:
-
                 # collecting all the subsequent data for that set
                 for k in range(1, (num_e + 1)):
                     e_n, unused = linelist[(j + k)].split('\t')
-
                     # Saving E/N values
                     red_e_field.append(e_n)
-
             elif linelist[j].find(titlelist[1]) != -1:
-
                 for k in range(1, (num_e + 1)):
                     e_n, mob = linelist[(j + k)].split('\t')
-
                     mobil[(k - 1), i] = mob
-
             # As above
             elif linelist[j].find(titlelist[2]) != -1:
-
                 for k in range(1, (num_e + 1)):
                     e_n, dif = linelist[(j + k)].split('\t')
-
                     dif_cof[(k - 1), i] = dif
-
             # As above
             elif linelist[j].find(titlelist[3]) != -1:
-
                 for k in range(1, (num_e + 1)):
                     e_n, e_mobility = linelist[(j + k)].split('\t')
-
                     e_mob[(k - 1), i] = e_mobility
-
             # As above
             elif linelist[j].find(titlelist[4]) != -1:
-
                 for k in range(1, (num_e + 1)):
                     e_n, e_diffusion = linelist[(j + k)].split('\t')
-
                     e_dif_cof[(k - 1), i] = e_diffusion
-
             # As above
             elif linelist[j].find(titlelist[5]) != -1:
-
                 for k in range(1, (num_e + 1)):
                     e_n, total_collision = linelist[(j + k)].split('\t')
 
                     tot_col_freq[(k - 1), i] = total_collision
-
             # As above
             elif linelist[j].find(titlelist[6]) != -1:
-
                 for k in range(1, (num_e + 1)):
                     e_n, mom_freq = linelist[(j + k)].split('\t')
-
                     p_freq[(k - 1), i] = mom_freq
-
             # As above
             elif linelist[j].find(titlelist[7]) != -1:
-
                 for k in range(1, (num_e + 1)):
                     e_n, total_ion = linelist[(j + k)].split('\t')
-
                     tot_ion_freq[(k - 1), i] = total_ion
-
             # As above
             elif linelist[j].find(titlelist[8]) != -1:
-
                 for k in range(1, (num_e + 1)):
                     e_n, townsend_ion = linelist[(j + k)].split('\t')
-
                     town_ion_cof[(k - 1), i] = townsend_ion
-
             # As above
             elif linelist[j].find(titlelist[9]) != -1:
-
                 for k in range(1, (num_e + 1)):
                     e_n, inelastic = linelist[(j + k)].split('\t')
-
                     inelastic_loss_cof[(k - 1), i] = inelastic
-
             # As above
             elif linelist[j].find(titlelist[10]) != -1:
-
                 # Taking the name of the data set
                 name_rate.append(linelist[j - 1].rstrip())
-
                 for k in range(1, (num_e + 1)):
                     e_n, rate = linelist[(j + k)].split('\t')
-
                     # Saving the data to a collective matrix
                     rate_matrix[(k - 1), r] = rate
-
                 r += 1
-
             # As above
             elif linelist[j].find(titlelist[11]) != -1:
-
                 name_energy.append(linelist[j - 1].rstrip())
-
                 for k in range(1, (num_e + 1)):
                     e_n, e_loss = linelist[(j + k)].split('\t')
-
                     e_loss_matrix[(k - 1), e] = e_loss
-
                 e += 1
 
         # Saving each set of rate and energy loss coefficients to collective dictionary
@@ -723,7 +608,6 @@ def gen_stats(gen_mat, num_values):
 
         # Iterate over each E/N value
         for i in range(len(y[:, 0])):
-
             # Initial values
             m_0 = y[i, 0]
             s_0 = 0
@@ -733,7 +617,6 @@ def gen_stats(gen_mat, num_values):
             # Iterate for each values in the E/N set
             for j in range(1, num_values):
                 m = m_0 + (y[i, j] - m_0) / (j + 1)
-
                 s = s_0 + ((y[i, j] - m_0) * (y[i, j] - m))
 
                 m_0 = m
@@ -838,7 +721,6 @@ def stats_file(red_e_field, all_stats, rate_stats, e_loss_stats, names_rate, nam
         for i in range(len(all_stats)):
 
             stats = all_stats[i]
-
             f.write('\n' + str(titlelist[i+1]) + '\n' + str(titlelist[0]) + '        Mean           STD of the Mean   '
                                                                             '   STD of the Pop.  Percentage Error\n')
 
@@ -1017,7 +899,7 @@ def graphing_data(red_e_field, stats, rate_stats, e_loss_stats, names_rate, name
     plt.close()
 
 
-"""  
+"""
 
 Morris Method Code:
 
@@ -1027,13 +909,13 @@ Morris Method Code:
 """
 
 
-def Morris():
+def Morris(subject, data, uncert_set, runs, species, num_EN_values, bolsig, num_cpus, p_values):
 
     start = time.time()
 
     og_cwd = getcwd()
 
-    cwd, data = changedir_morris(getcwd())
+    cwd = changedir(og_cwd, subject)
 
     cwd2 = join(cwd, 'Morris')
 
@@ -1051,52 +933,50 @@ def Morris():
     logging.basicConfig(filename=join(cwd2, "program.log"), filemode='w', level=logging.DEBUG,
                         format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p')
 
-    file = data_set_morris(data)
+    linelist = data_set(data)
 
-    items = wordlist_morris()
+    startsec, dashsec = search_set(linelist)
 
-    startsec, dashsec, linelist = search_set_morris(file, items)
+    com_format(startsec, dashsec, linelist, data)
 
-    com_format_morris(startsec, dashsec, linelist, data)
+    linelist = data_set(data)
 
-    file = data_set_morris(data)
+    startsec, dashsec  = search_set(linelist)
 
-    startsec, dashsec, linelist = search_set_morris(file, items)
+    commsec = comment_sec(startsec, dashsec, linelist)
 
-    commsec = comment_sec_morris(startsec, dashsec, linelist)
+    dataset_name = read_energy(startsec, linelist)
 
-    uncert_set, dataset_name = com_uncert_morris(startsec, linelist)
-
-    sample_set, delta, num_params = run_morris(uncert_set)
+    sample_set, delta, num_params = run_morris(uncert_set, p_values, runs)
 
     sample_set = cdf(uncert_set, sample_set)
 
     logging.info('Morris trajectories created - working directories created')
 
-    cs_data = find_num_morris(startsec, dashsec, linelist)
+    cs_data = find_num(startsec, dashsec, linelist)
 
     inputfiles = data_edit_morris(cs_data, sample_set, data, cwd, dashsec, commsec, cwd2)
 
     logging.info('Input files created')
 
-    num_EN_val = bolsig_file_morris(inputfiles, cwd2,og_cwd)
+    inputdir = bolsig_file_morris(inputfiles, cwd2, og_cwd, species, num_EN_values)
 
     logging.info('BOLSIG run files created')
 
-    bolsig_minus_morris(cwd2, og_cwd)
+    bolsig_minus_morris(inputdir, bolsig, num_cpus)
 
     logging.info('All BOLSIG simulations complete')
 
-    mean, std, energy, coef_names = morris_stats(inputfiles, sample_set, delta, num_EN_val, num_params)
+    mean, std, energy = morris_stats(inputfiles, inputdir, sample_set, delta, num_EN_values, num_params)
 
     logging.info('Statistics completed')
 
-    print_stats(mean, std, energy, cwd2, dataset_name, coef_names)
+    print_stats(mean, std, energy, cwd2, dataset_name)
 
     logging.info('Stats file created')
     logging.info('Normalising Stats')
 
-    normal_stats(mean, std, energy, dataset_name, coef_names)
+    normal_stats(mean, std, energy, dataset_name)
 
     logging.info('Stats Normalised')
 
@@ -1105,217 +985,27 @@ def Morris():
     print(end-start)
 
 
-# Changing directory for data sets
-def changedir_morris(path):
-    # requesting data file location within main directory
-    subject = str(input("Please enter the path to your data location. "))
+# Reading the energy of each collision for information later
+def read_energy(startsec, linelist):
 
-    # Changing main directory to above location
-    chdir(join(path, subject))
-    # Displaying new main directory
-    cwd = getcwd()
-    print(cwd)
+    data_energy = []
+    for x in startsec:
+        data_energy.append(linelist[x+2])
 
-    # Prompt for data filename
-    data = str(input("Please enter the full file name. "))
-
-    return cwd, data
-
-
-# Importing data file to program
-def data_set_morris(data):
-    # Opening data file in a Read/Write capacity
-    file = open(data, "r+", encoding='utf8')
-
-    return file
-
-
-# Creating list of words to search for
-def wordlist_morris():
-    # global items
-
-    items = ['EXCITATION', 'ELASTIC', 'IONIZATION', 'EFFECTIVE', 'ROTATIONAL', 'ATTACHMENT']
-    print(items)
-
-    return items
-
-
-# Searching Data set for locations of COMMENT lines of different Cross Sections
-def search_set_morris(a, j):
-    # split the file content into lines and save a list
-    linelist = a.read().splitlines()
-    # Find how many lines in the data set
-    x = len(linelist)
-    # Initial value
-    y = 0
-
-    # Lists to save the locations of the start of each data set and their corresponding COMMENT section
-    startsec = []
-    dashsec = []
-
-    while y <= x:
-
-        # Calling each line individually
-        line = str(linelist[y:y + 1])
-
-        # Looking for the beginning of a data set
-        if any(word in line for word in j):
-
-            startsec.append(y)
-
-            y += 1
-
-        # Looking for the Column section
-        elif line.find('---------------') != -1:
-
-            dashsec.append(y)
-
-            y += 1
-        else:
-
-            y += 1
-
-    return startsec, dashsec, linelist
-
-
-# Function to search for Comment sections and add those that do not have them
-def com_format_morris(startsec, dashsec, linelist, data):
-    # Variable to store the location of lines containing param.:
-    paramline = []
-    p_location = 0
-
-    # Loop to check is the data set has comment sections
-    for i in range(0, (len(startsec))):
-
-        x = startsec[i]
-        y = dashsec[i * 2]
-
-        while x <= y:
-
-            line = str(linelist[x:x + 1])
-
-            # checking line for the word comment
-            if line.find('COMMENT:') != -1:
-
-                x += 1
-                break
-
-            # If comment isn't present checking for param.:
-            elif line.find('PARAM.:') != -1:
-
-                p_location = x
-                x += 1
-
-            # Continuation of loop
-            else:
-                x += 1
-
-            # If no COMMENT: was found this will store the location of PARAM.:
-            if x == y:
-
-                paramline.append(p_location)
-
-            else:
-
-                continue
-
-    # Writing changes to the existing file
-    out_file = []
-    for i in range(0, (len(linelist))):
-
-        # This will add a comment line after param.: to any data set without one
-        if i in paramline:
-
-            out_file.append(linelist[i] + '\nCOMMENT:\n')
-
-        else:
-
-            out_file.append(linelist[i] + '\n')
-
-    print(out_file)
-    with open(data, 'w', encoding='utf-8') as f:
-        f.writelines(out_file)
-
-    return
-
-
-# Function to collect all comment sections
-def comment_sec_morris(startsec, dashsec, linelist):
-    # Array to store comment line locations
-    commsec = []
-
-    # Loop to find and store the comment lines
-    for i in range(0, (len(startsec))):
-
-        x = startsec[i]
-        y = dashsec[i * 2]
-
-        while x <= y:
-
-            line = str(linelist[x:x + 1])
-
-            # Looking for comment in the selected line
-            if line.find('COMMENT:') != -1:
-
-                # If the word comment was found storing the line number
-                commsec.append(x)
-                x += 1
-                break
-
-            else:
-
-                x += 1
-
-    return commsec
-
-
-# Editing the data file to add the uncertainty on each cross section to the COMMENT section the the CS
-def com_uncert_morris(startsec, linelist):
-
-    # Array to store the uncertainties of each data set as inputted below
-    uncert_set = []
-    energy = []
-
-    # For loop to edit each cross section
-    for i in range(0, (len(startsec))):
-        # Line data lists
-        x = startsec[i]
-        # Experimental uncertainty in that cross section
-        uncert = float(input("What is the uncertainty for " + str(linelist[x]) + ", " + str(linelist[x + 1]) + ":"))
-        # Adding uncertainty input to data set
-        uncert_set.append(uncert)
-
-        energy.append(linelist[x+2])
-
-    return uncert_set, energy
-
-
-# General analysis specific inputs of Morris analysis
-def morris_inputs(uncert_set):
-
-    # Number of input parameters
-    # num_params = int(input("Please enter the number of parameters describing the system. "))
-    num_params = len(uncert_set)
-    # Number of discrete values each input can take
-    num_levels = int(input("Please enter the number of p-levels. "))
-    # Number of iterations of the Morris analysis
-    runs = int(input("How many runs? "))
-
-    # Size of discrete step
-    delta = num_levels/2
-
-    return num_params, delta, runs, num_levels
+    return data_energy
 
 
 # Compiling all matrices and calculation Morris trajectory matrix
-def run_morris(uncert_set):
+def run_morris(uncert_set, num_levels, runs):
 
-    num_params, delta, runs, num_levels = morris_inputs(uncert_set)
+    num_params = len(uncert_set)
+    delta = num_levels/2
 
     # Empty array to contain trajectories
     initial_traj = zeros(((num_params + 1), num_params))
-
     sample_set = {}
+
+    progressbar = Bar('Generating Trajectories  ', max=runs, suffix='%(percent)d%%')
 
     # Calculating trajectories
     for iterations in range(runs):
@@ -1327,52 +1017,46 @@ def run_morris(uncert_set):
 
         # Setting up first location
         for i in range(num_params):
-
             traj[0][i] = randint(0, num_levels-1)
 
         # Changing one parameter at a time to create a random walk
         for j in range(num_params):
-
             # Copying previous location
             for m in range(num_params):
                 traj[j+1][m] = traj[j][m]
 
             # Defining which parameter needs to be changed
             rnd_loc = route[j]
-
             # Changing the parameter
             if traj[j+1][rnd_loc] < delta:
-
                 traj[j+1][rnd_loc] += delta
-
             else:
-
                 traj[j+1][rnd_loc] -= delta
 
         # Normalising values to exclusively between 0 and 1
         traj += 0.5
         traj = divide(traj, num_levels)
-
         sample_set[iterations] = traj
+
+        progressbar.next()
+    progressbar.finish()
 
     return sample_set, delta, num_params
 
 
 def cdf(uncert_set, sample_set):
 
+    progressbar = Bar('Converting Trajectories ', max=len(sample_set), suffix='%(percent)d%%')
+
     # Distribution Parameters ( MEan and Variance)
     mean = 1
-
     for key in sample_set:
-
         sample = sample_set[key]
 
         for i in range(len(sample)):
-
             for j in range(len(uncert_set)):
                 x = sample[i, j].copy()
-
-                var = uncert_set[j]**2
+                var = float(uncert_set[j])**2
 
                 # Calcualting std from a specified formula
                 sigma = sqrt(log(1 + (var / (mean ** 2))))
@@ -1381,28 +1065,10 @@ def cdf(uncert_set, sample_set):
 
                 # Percetange Point Function to convert Morris sample values to perturbation values
                 sample[i, j] = stats.lognorm.ppf(x, sigma, mu)
-
-    print(sample_set)
+        progressbar.next()
+    progressbar.finish()
 
     return sample_set
-
-
-# Finding and extracting each individual data set
-def find_num_morris(startsec, dashsec, linelist):
-    # Dictionary to collect the data for each Cross Section
-    cs_data = {}
-
-    # Iteratively adding to the above dictionary
-    for i in range(0, len(startsec)):
-        cs_name = linelist[startsec[i] + 1]
-        cs_start = dashsec[i * 2] + 1
-        cs_end = dashsec[(i * 2) + 1]
-
-        cs_set = linelist[cs_start:cs_end]
-
-        cs_data[(str(cs_name) + ", No." + str(i))] = cs_set
-
-    return cs_data
 
 
 # Using the generated random numbers to create an equal amount of perturbed data files
@@ -1412,12 +1078,13 @@ def data_edit_morris(cs_data, sample_set, oldfile, cwd, dashsec, commsec, cwd2):
 
     chdir(cwd2)
 
-    cwd3 = join(cwd2, 'Input Files')
+    cwd3 = join(cwd2, 'Input_Files')
     makedirs(cwd3)
     new_file_database = {}
 
-    for key in sample_set:
+    progressbar = Bar('Generating Datasets ', max=len(sample_set), suffix='%(percent)d%%')
 
+    for key in sample_set:
         new_dir_name = ('File_set_' + str(key))
         cwd4 = join(cwd3, new_dir_name)
         makedirs(cwd4)
@@ -1431,14 +1098,11 @@ def data_edit_morris(cs_data, sample_set, oldfile, cwd, dashsec, commsec, cwd2):
         new_file_list = []
 
         for i in range(len(sample)):
-
             cvals = cross_values.copy()
 
             for j in range(len(sample[0])):
-
                 # Selecting 1 set of data at a time
                 dataset = cvals[j].copy()
-
                 # Iterating over each cross section individually
                 for k in range(len(dataset)):
                     # Splitting the Energy and Cross-Section numbers
@@ -1448,13 +1112,11 @@ def data_edit_morris(cs_data, sample_set, oldfile, cwd, dashsec, commsec, cwd2):
                     new_cs = (float(cs) * sample[i, j])
                     # Creating a new data line with the new cross section number
                     newdata = (E + '\t' + str(new_cs))
-
                     # Updating the list
                     dataset[k] = newdata
 
                 # Updating the entire data set
                 cvals[j] = dataset.copy()
-
                 # Adding the newly perturbed data lines to the main list
                 for x, y in zip(range((dashsec[j * 2] + 1), (dashsec[(j * 2) + 1])), range(len(dataset))):
                     oldlinelist[x] = dataset[y]
@@ -1463,8 +1125,7 @@ def data_edit_morris(cs_data, sample_set, oldfile, cwd, dashsec, commsec, cwd2):
 
             # Creating a new file for each uncertainty perturbation
             new_file = NTF(mode='w', dir=cwd4, suffix='.txt', delete=False, encoding="utf8")
-
-            new_file_list.append(new_file.name.replace((cwd4+str("\\")), ""))
+            new_file_list.append(new_file.name.replace((cwd4+str("/")), ""))
 
             # and write everything back into their own new file
             for item in oldlinelist:
@@ -1473,19 +1134,17 @@ def data_edit_morris(cs_data, sample_set, oldfile, cwd, dashsec, commsec, cwd2):
             new_file.close()
 
         new_file_database[new_dir_name] = new_file_list
-
-    print(new_file_database)
-    print(getcwd())
+        progressbar.next()
+    progressbar.finish()
 
     return new_file_database
 
 
 # Creating the input file for Bolsig minus
-def bolsig_file_morris(filename, cwd, og_cwd):
+def bolsig_file_morris(filename, cwd, og_cwd, species_name, num_EN_values):
 
     # Opening the template runfile
     file = open(join(og_cwd, 'bolsig_run_script.dat'), "r+", encoding='utf8')
-
     # Splitting the lines of the file into a readable list
     linelist = file.read().splitlines()
 
@@ -1500,125 +1159,87 @@ def bolsig_file_morris(filename, cwd, og_cwd):
 
         # Finding the Input filename
         if linelist[i].find('/ File ') != -1:
-
             inputlocation = i
-
         # Finding the output file name
         elif linelist[i].find('/ Species') != -1:
-
             species = i
-
         # Finding the output file name
         elif linelist[i].find('/ Output File ') != -1:
-
             outputlocation = i
-
         elif linelist[i].find('/ Number') != -1:
-
             num_EN_loc = i
 
-    species_name = str(input('What species is being studied? '))
-    num_EN_values = int(input('How many E/N values would you like? '))
     input_dirs = list(filename.keys())
-    inputdir = str(cwd) + '\\Input Files\\'
+    inputdir = str(cwd) + '/Input_Files/'
+
+    progressbar = Bar('Creating Run Files ', max=len(input_dirs), suffix='%(percent)d%%')
 
     # Creating a run file for each data file
     for x in range(len(input_dirs)):
 
         chdir(join(inputdir, input_dirs[x]))
         cwd = getcwd()
-
         file_list = listdir(cwd)
 
-        for i in range(len(file_list)):
-
-            runfile = ('run_' + str(i) + '.dat')
+        for inputfile in file_list:
+            runfile = ('run_' + inputfile)
 
             # Opening the runfile in a writable capacity
             with open(runfile, 'w', encoding='utf8') as f:
-
                 # Updating the file with the respective input and output filenames
                 # Along with every other line in the template file
-
                 for j in range(len(linelist)):
-
                     if j == inputlocation:
-
-                        f.write(('\"' + cwd + '\\' + file_list[i] + '\"' + '    / File\n'))
-
+                        f.write(('\"' + cwd + "/" + inputfile + '\"' + '    / File\n'))
                     elif j == outputlocation:
-
-                        output_filename = ('output_' + file_list[i])
-
-                        f.write((output_filename + '    / Output File\n'))
-
+                        f.write(('\"' + cwd + '/output_' + inputfile + '\"' + '      / Output File\n'))
                     elif j == species:
-
                         f.write((species_name + '    / Species\n'))
-
                     elif j == num_EN_loc:
-
                         f.write((str(num_EN_values) + '    / Number\n'))
-
                     else:
-
                         f.write(linelist[j] + '\n')
+        progressbar.next()
+    progressbar.finish()
 
-    return num_EN_values
+    return inputdir
 
 
 # Function to Run BOLSIG-
-def bolsig_minus_morris(cwd, og_cwd):
+def bolsig_minus_morris(inputdir, bolsig, num_cpus):
 
-    # Specify the location of BOLSIG-
-    bolsig = ("\"" + str(og_cwd) + "\\bolsigminus.exe\"")
-
-    chdir(join(cwd, 'Input files'))
-    cwd = getcwd()
-    dir_list = listdir(cwd)
-
+    dir_list = listdir(inputdir)
     logging.info('BOLSIG- calculations have begun')
+
+    progressbar = Bar('Running BOLSIG- ', max=len(dir_list), suffix='%(percent)d%%')
+
+    # Function that will execute BOLSIG-
+    def solver(infiles):
+        proc = Popen([bolsig, infiles], stdout=DEVNULL)
+        proc.wait()
 
     for item in dir_list:
 
-        # Specify the output directory
-        outputdir = str(cwd) + '\\' + item
-        print('Current working directory is ' + item)
         logging.debug('BOLSIG now running in ' + item)
+        runfiles = glob.glob(inputdir + item + "/run*")
 
-        for file in listdir(outputdir):
+        # This will map the solver function to multiple processors
+        with futures.ThreadPoolExecutor(max_workers=num_cpus) as execute_solver:
+            execute_solver.map(solver, runfiles)
+        progressbar.next()
 
-            if file.startswith('run_'):
-
-                # Specify the input file location
-                infile = ("\"" + outputdir + '\\' + file + "\"")
-
-                # Temporary file allowing for Popen to run
-                f = NTF('w', suffix='.txt', delete=True, encoding='utf-8')
-
-                # Run BOLSIG-
-                r = Popen("%s %s" % (bolsig, infile), stdout=f, cwd=outputdir)
-                # Wait for BOLSIG- to complete
-                Popen.wait(r)
-
+    progressbar.finish()
     return
 
 
-def morris_stats(file_list, sample_set, delta, num_EN_val, num_params):
+def morris_stats(file_list, inputdir, sample_set, delta, num_EN_val, num_params):
 
     logging.debug('Mobility statistical calculations have begun')
 
     # Initial Matrices and values
-    cwd = getcwd()
     mob_start = 0
     diff_start = 0
     ion_start = 0
-    excite_1 = 0
-    excite_2 = 0
-    excite_3 = 0
-    ex_pass = 100000000
-    coef_names = ['Mobility', '\nDiffusion Coef.', '\nIonisation coef.', '\n1st Excitation', '\n2nd Excitation',
-                  '\n3rd Excitation']
 
     mean = {}
     std = {}
@@ -1628,7 +1249,7 @@ def morris_stats(file_list, sample_set, delta, num_EN_val, num_params):
     for keys, num in zip(file_list, sample_set):
 
         # Entering each directory and setting up list of input files and corresponding morris trajectories
-        chdir(join(cwd, keys))
+        chdir(join(inputdir, keys))
         input_files = file_list[keys]
         sample = sample_set[num]
 
@@ -1656,32 +1277,19 @@ def morris_stats(file_list, sample_set, delta, num_EN_val, num_params):
             # This is only done once as each file is of the exact same format
             if mob_start == 0:
                 for j in range(len(file_1)):
-                    if file_1[j].find('Mobility') != -1:
+                    if 'Mobility' in file_1[j]:
                         mob_start = j
-
-                    elif file_1[j].find('Diffusion coefficient') != -1:
+                    elif 'Diffusion coefficient' in file_1[j]:
                         diff_start = j
-
-                    elif file_1[j].find('Total ionization freq.') != -1:
+                    elif 'Total ionization freq.' in file_1[j]:
                         ion_start = j
-                        ex_pass = j
-
-                    elif file_1[j].find('C2') != -1 and j > ex_pass:
-                        excite_1 = j
-                        print(file_1[excite_1])
-
-                    elif file_1[j].find('C3') != -1 and j > ex_pass:
-                        excite_2 = j
-
-                    elif file_1[j].find('C4') != -1 and j > ex_pass:
-                        excite_3 = j
+                    elif 'Ionization' in file_1[j] and 'Rate coefficient' in file_1[j+1]:
+                        ion_rate_start = j+1
                         break
-
                     else:
                         continue
 
-            for stat, stat_name in zip([mob_start, diff_start, ion_start, (excite_1+1), (excite_2+1), (excite_3+1)],
-                                       coef_names):
+            for stat, stat_name in zip([mob_start, diff_start, ion_start, ion_rate_start], ['mob', 'dif', 'ion', 'ion_rate']):
 
                 # Iterating through each line of mobility data
                 for k in range(num_EN_val):
@@ -1751,24 +1359,26 @@ def morris_stats(file_list, sample_set, delta, num_EN_val, num_params):
                             stat_std[k, value_loc] = s
 
     # Final calculation for STD
-    for name in coef_names:
+    for name in ['mob', 'dif', 'ion', 'ion_rate']:
         std[name] = sqrt(divide(std[name], (len(sample_set) - 1)))
 
-    return mean, std, energy, coef_names
+    return mean, std, energy
 
 
-def print_stats(mean_stats, std_stats, energy, cwd, dataset, coef_names):
+def print_stats(mean_stats, std_stats, energy, cwd, dataset):
 
     chdir(cwd)
 
     # Creating a file contain the calculated data
     with open('stats.txt', 'w', encoding='utf8') as f:
 
-        # Iterate over all transport coefficients
-        for name in coef_names:
+        coef_names = ['Mobility', '\nDiffusion Coef.', '\nIonisation coef.', '\nIonisation Rate Coefficient']
 
-            mean = mean_stats[name]
-            std = std_stats[name]
+        # Iterate over all transport coefficients
+        for keys, name in zip(mean_stats, coef_names):
+
+            mean = mean_stats[keys]
+            std = std_stats[keys]
 
             f.write(name + '\n\n')
 
@@ -1807,16 +1417,18 @@ def print_stats(mean_stats, std_stats, energy, cwd, dataset, coef_names):
                 f.write('\n')
 
 
-def normal_stats(mean_stats, std_stats, energy, dataset, coef_names):
+def normal_stats(mean_stats, std_stats, energy, dataset):
 
     # Creating a file contain the calculated data
     with open('norm_stats.txt', 'w', encoding='utf8') as f:
 
-        # Iterate over all transport coefficients
-        for name in coef_names:
+        coef_names = ['Mobility', '\nDiffusion Coef.', '\nIonisation coef.', '\nIonisation Rate Coefficient']
 
-            mean = mean_stats[name]
-            std = std_stats[name]
+        # Iterate over all transport coefficients
+        for keys, name in zip(mean_stats, coef_names):
+
+            mean = mean_stats[keys]
+            std = std_stats[keys]
 
             seterr(divide='ignore', invalid='ignore')
             mean = mean / mean.sum(axis=1)[:, None]
@@ -1853,7 +1465,5 @@ def normal_stats(mean_stats, std_stats, energy, dataset, coef_names):
                 for j in range(len(dataset)):
                     f.write(f_f(float(std[i, j]), precision=3, unique=False) + '          ')
                 f.write('\n')
-
-
 
 run_program()

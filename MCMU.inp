@@ -1,0 +1,21 @@
+###############################################################
+
+Contained within is all input parameter for the program MCMU
+
+N.B. The format of this file must remain unchanged so as to 
+ensure accurate running of the program 
+
+##############################################################
+
+Program = 1   #(1:Monte-Carlo, 2:Morris)
+Relative_Path_to_data = data/N2
+Data_filename = phelps.txt
+Array_with_uncertainty_values = 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.5 0.5 0.25 0.1 0.4 
+Runs = 100000
+Species = N2
+Num_E/N_Values = 50
+BOLSIG_location = /home/rdoyle/MCMU/BOLSIG/bolsigminus
+Num_CPUs = 8    #(Default=max)
+
+###### Morris Program Only ######
+p_values = 10
