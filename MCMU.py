@@ -1240,6 +1240,8 @@ def morris_stats(file_list, inputdir, sample_set, delta, num_EN_val, num_params)
     mob_start = 0
     diff_start = 0
     ion_start = 0
+    excite_rate = []
+    ion_rate = []
 
     mean = {}
     std = {}
@@ -1283,83 +1285,160 @@ def morris_stats(file_list, inputdir, sample_set, delta, num_EN_val, num_params)
                         diff_start = j
                     elif 'Total ionization freq.' in file_1[j]:
                         ion_start = j
+                    elif 'Excitation' in file_1[j] and 'Rate coefficient' in file_1[j+1]:
+                        excite_rate.append(j+1)
                     elif 'Ionization' in file_1[j] and 'Rate coefficient' in file_1[j+1]:
-                        ion_rate_start = j+1
+                        ion_rate.append(j+1)
+                    elif 'Energy loss coefficient' in file_1[j+1]:
                         break
                     else:
                         continue
 
-            for stat, stat_name in zip([mob_start, diff_start, ion_start, ion_rate_start], ['mob', 'dif', 'ion', 'ion_rate']):
+            for stat, stat_name in zip([mob_start, diff_start, ion_start, excite_rate, ion_rate], ['mob', 'dif', 'ion', 'excite_rate', 'ion_rate']):
 
-                # Iterating through each line of mobility data
-                for k in range(num_EN_val):
+                if isinstance(stat, list):
+                    stat_list = stat
+                    stat_list_name = stat_name
+                    for i in range(len(stat_list)):
+                        stat_name = stat_list_name + "_{}".format(i)
+                        stat = stat_list[i]
 
-                    # extracting energy and mobility values
-                    E, stat_1 = file_1[stat + k + 1].split('\t')
-                    E, stat_2 = file_2[stat + k + 1].split('\t')
+                        # Iterating through each line of mobility data
+                        for k in range(num_EN_val):
 
-                    # The set of files must act as the data that sets the initial values
-                    if num == 0:
+                            # extracting energy and mobility values
+                            E, stat_1 = file_1[stat + k + 1].split('\t')
+                            E, stat_2 = file_2[stat + k + 1].split('\t')
 
-                        mean[stat_name] = zeros((num_EN_val, num_params))
-                        std[stat_name] = zeros((num_EN_val, num_params))
+                            # The set of files must act as the data that sets the initial values
+                            if num == 0:
 
-                        stat_mean = mean[stat_name]
-                        stat_std = std[stat_name]
+                                mean[stat_name] = zeros((num_EN_val, num_params))
+                                std[stat_name] = zeros((num_EN_val, num_params))
 
-                        # The direction of trajectory change determines the formula used
-                        if row_sum[i] < 0:
+                                stat_mean = mean[stat_name]
+                                stat_std = std[stat_name]
 
-                            # Elementary Effect calculation
-                            EE = (float(stat_2)-float(stat_1))/delta
-                            EE = abs(EE)
+                                # The direction of trajectory change determines the formula used
+                                if row_sum[i] < 0:
 
-                            # Setting the initial elements of the matrices
-                            stat_mean[k, value_loc] = EE
-                            stat_std[k, value_loc] = 0
-                            energy[k] = E
+                                    # Elementary Effect calculation
+                                    EE = (float(stat_2)-float(stat_1))/delta
+                                    EE = abs(EE)
 
+                                    # Setting the initial elements of the matrices
+                                    stat_mean[k, value_loc] = EE
+                                    stat_std[k, value_loc] = 0
+                                    energy[k] = E
+
+                                else:
+
+                                    EE = (float(stat_1) - float(stat_2)) / delta
+                                    EE = abs(EE)
+
+                                    stat_mean[k, value_loc] = EE
+                                    stat_std[k, value_loc] = 0
+                                    energy[k] = E
+
+                            # For all data after the first data
+                            else:
+
+                                stat_mean = mean[stat_name]
+                                stat_std = std[stat_name]
+
+                                if row_sum[i] < 0:
+
+                                    EE = (float(stat_2) - float(stat_1)) / delta
+                                    EE = abs(EE)
+
+                                    # Calculating moving averages and standard deviations as data is read
+                                    m = stat_mean[k, value_loc] + (EE - stat_mean[k, value_loc]) / (num + 1)
+                                    s = stat_std[k, value_loc] + ((EE - stat_mean[k, value_loc]) * (EE - m))
+
+                                    # Redefined mean and std values
+                                    stat_mean[k, value_loc] = m
+                                    stat_std[k, value_loc] = s
+
+                                else:
+
+                                    EE = (float(stat_1) - float(stat_2)) / delta
+                                    EE = abs(EE)
+
+                                    m = stat_mean[k, value_loc] + (EE - stat_mean[k, value_loc]) / (num + 1)
+                                    s = stat_std[k, value_loc] + ((EE - stat_mean[k, value_loc]) * (EE - m))
+
+                                    stat_mean[k, value_loc] = m
+                                    stat_std[k, value_loc] = s
+                else:
+                    # Iterating through each line of mobility data
+                    for k in range(num_EN_val):
+
+                        # extracting energy and mobility values
+                        E, stat_1 = file_1[stat + k + 1].split('\t')
+                        E, stat_2 = file_2[stat + k + 1].split('\t')
+
+                        # The set of files must act as the data that sets the initial values
+                        if num == 0:
+
+                            mean[stat_name] = zeros((num_EN_val, num_params))
+                            std[stat_name] = zeros((num_EN_val, num_params))
+
+                            stat_mean = mean[stat_name]
+                            stat_std = std[stat_name]
+
+                            # The direction of trajectory change determines the formula used
+                            if row_sum[i] < 0:
+
+                                # Elementary Effect calculation
+                                EE = (float(stat_2) - float(stat_1)) / delta
+                                EE = abs(EE)
+
+                                # Setting the initial elements of the matrices
+                                stat_mean[k, value_loc] = EE
+                                stat_std[k, value_loc] = 0
+                                energy[k] = E
+
+                            else:
+
+                                EE = (float(stat_1) - float(stat_2)) / delta
+                                EE = abs(EE)
+
+                                stat_mean[k, value_loc] = EE
+                                stat_std[k, value_loc] = 0
+                                energy[k] = E
+
+                        # For all data after the first data
                         else:
 
-                            EE = (float(stat_1) - float(stat_2)) / delta
-                            EE = abs(EE)
+                            stat_mean = mean[stat_name]
+                            stat_std = std[stat_name]
 
-                            stat_mean[k, value_loc] = EE
-                            stat_std[k, value_loc] = 0
-                            energy[k] = E
+                            if row_sum[i] < 0:
 
-                    # For all data after the first data
-                    else:
+                                EE = (float(stat_2) - float(stat_1)) / delta
+                                EE = abs(EE)
 
-                        stat_mean = mean[stat_name]
-                        stat_std = std[stat_name]
+                                # Calculating moving averages and standard deviations as data is read
+                                m = stat_mean[k, value_loc] + (EE - stat_mean[k, value_loc]) / (num + 1)
+                                s = stat_std[k, value_loc] + ((EE - stat_mean[k, value_loc]) * (EE - m))
 
-                        if row_sum[i] < 0:
+                                # Redefined mean and std values
+                                stat_mean[k, value_loc] = m
+                                stat_std[k, value_loc] = s
 
-                            EE = (float(stat_2) - float(stat_1)) / delta
-                            EE = abs(EE)
+                            else:
 
-                            # Calculating moving averages and standard deviations as data is read
-                            m = stat_mean[k, value_loc] + (EE - stat_mean[k, value_loc]) / (num + 1)
-                            s = stat_std[k, value_loc] + ((EE - stat_mean[k, value_loc]) * (EE - m))
+                                EE = (float(stat_1) - float(stat_2)) / delta
+                                EE = abs(EE)
 
-                            # Redefined mean and std values
-                            stat_mean[k, value_loc] = m
-                            stat_std[k, value_loc] = s
+                                m = stat_mean[k, value_loc] + (EE - stat_mean[k, value_loc]) / (num + 1)
+                                s = stat_std[k, value_loc] + ((EE - stat_mean[k, value_loc]) * (EE - m))
 
-                        else:
-
-                            EE = (float(stat_1) - float(stat_2)) / delta
-                            EE = abs(EE)
-
-                            m = stat_mean[k, value_loc] + (EE - stat_mean[k, value_loc]) / (num + 1)
-                            s = stat_std[k, value_loc] + ((EE - stat_mean[k, value_loc]) * (EE - m))
-
-                            stat_mean[k, value_loc] = m
-                            stat_std[k, value_loc] = s
+                                stat_mean[k, value_loc] = m
+                                stat_std[k, value_loc] = s
 
     # Final calculation for STD
-    for name in ['mob', 'dif', 'ion', 'ion_rate']:
+    for name in std.keys():
         std[name] = sqrt(divide(std[name], (len(sample_set) - 1)))
 
     return mean, std, energy
@@ -1372,7 +1451,17 @@ def print_stats(mean_stats, std_stats, energy, cwd, dataset):
     # Creating a file contain the calculated data
     with open('stats.txt', 'w', encoding='utf8') as f:
 
-        coef_names = ['Mobility', '\nDiffusion Coef.', '\nIonisation coef.', '\nIonisation Rate Coefficient']
+        coef_names = ['Mobility', '\nDiffusion Coef.', '\nIonisation coef.']
+        excite_index = 1
+        ion_index = 1
+
+        for keys in mean_stats:
+            if 'excite' in keys:
+                coef_names.append("\nExcition Rate Coefficient {}".format(excite_index))
+                excite_index += 1
+            if 'ion_rate' in keys:
+                coef_names.append("\nIonization Rate Coefficient {}".format(ion_index))
+                ion_index += 1
 
         # Iterate over all transport coefficients
         for keys, name in zip(mean_stats, coef_names):
@@ -1422,7 +1511,17 @@ def normal_stats(mean_stats, std_stats, energy, dataset):
     # Creating a file contain the calculated data
     with open('norm_stats.txt', 'w', encoding='utf8') as f:
 
-        coef_names = ['Mobility', '\nDiffusion Coef.', '\nIonisation coef.', '\nIonisation Rate Coefficient']
+        coef_names = ['Mobility', '\nDiffusion Coef.', '\nIonisation coef.']
+        excite_index = 1
+        ion_index = 1
+
+        for keys in mean_stats:
+            if 'excite' in keys:
+                coef_names.append("\nExcition Rate Coefficient {}".format(excite_index))
+                excite_index += 1
+            if 'ion_rate' in keys:
+                coef_names.append("\nIonization Rate Coefficient {}".format(ion_index))
+                ion_index += 1
 
         # Iterate over all transport coefficients
         for keys, name in zip(mean_stats, coef_names):
