@@ -182,7 +182,6 @@ def create_barchart(stats_file, species, coef_index, filename, num_bars):
     for data_line in coef_data[4:11]:
 
         E_over_N, index_list, top_data = extract_data(data_line, num_bars)
-        print(E_over_N)
         new_filename = filename + "_" + E_over_N
 
         plot_barh(top_data, title, index_list, new_filename, cross_sections)
