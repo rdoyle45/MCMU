@@ -5,6 +5,7 @@ from matplotlib.ticker import MaxNLocator
 import numpy as np
 from os import makedirs
 from os.path import isdir, dirname
+from math import isnan
 
 helium_names = ['Elastic',
                 'He \\rightarrow \mathrm{2^3S_1}',
@@ -113,8 +114,9 @@ def plot_barh(top_data, title, filename, cross_sections, data_max):
         fig = plt.figure()
         ax = fig.add_subplot(111)
         #ax.xaxis.set_major_locator(MaxNLocator(symmetric=True))
-        ax.set_xlim(xmax=data_max*1.01)
-        ax.set_xticks(np.linspace(0, data_max*1.01, 7))
+        #ax.set_xlim(xmax=data_max*1.01)
+        #ax.set_xticks(np.linspace(0, data_max*1.01, 7))
+        ax.set_xticks(np.linspace(0, 1, 5))
         ax.barh(pos, data, color=colour)
         plt.title(title)
         ax.set_yticks(pos + 0.0)
@@ -144,8 +146,12 @@ def extract_data(data_line, num_bars):
 
     top_data = []
     for i in index_list:
+
         if data[i] != 0:
             top_data.append([data[i], i])
+
+        if isnan(data[i]):
+            return None, None, None
 
     if top_data:
         max_value = max(top_data)[0]
@@ -160,6 +166,11 @@ def extract_data(data_line, num_bars):
 
     for small_set in too_small_sets:
         top_data.remove(small_set)
+
+    # Normalisation to max value
+    for i in range(len(top_data)):
+        top_data[i][0] /= max_value
+
 
     return E_over_N, top_data, max_value
 
