@@ -1474,32 +1474,25 @@ def print_stats(mean_stats, std_stats, energy, cwd, dataset):
             f.write('Mean\nE/N    ')
 
             for i in range(len(dataset)):
-
                 f.write(dataset[i] + ' eV    ')
 
             f.write('\n')
 
             for i in range(len(mean)):
-
                 f.write(f_f(float(energy[i])) + '    ')
 
                 for j in range(len(dataset)):
-
                     f.write(f_f(float(mean[i, j]), precision=3, unique=False) + '          ')
                 f.write('\n')
 
             f.write('STD\nE/N    ')
 
             for i in range(len(dataset)):
-
                 f.write(dataset[i] + ' eV    ')
-
             f.write('\n')
 
             for i in range(len(mean)):
-
                 f.write(f_f(float(energy[i])) + '    ')
-
                 for j in range(len(dataset)):
 
                     f.write(f_f(float(std[i, j]), precision=3, unique=False) + '          ')

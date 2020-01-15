@@ -81,7 +81,7 @@ nitrogen_names = ['Effective',
                   '\mathrm{N_2} \\rightarrow \mathrm{w ^1\\Delta}',
                   '\mathrm{N_2} \\rightarrow \mathrm{C ^3\\Delta}',
                   '\mathrm{N_2} \\rightarrow \mathrm{E ^3\\Sigma}',
-                  '\mathrm{N_2} \\rightarrow \mathrm{a\" ^1\\Sigma}',
+                  '\mathrm{N_2} \\rightarrow \\mathrm{a\" ^1\\Sigma}',
                   '\mathrm{N_2} \\rightarrow \mathrm{Ex. Sum}',
                   '\mathrm{N_2} \\rightarrow \mathrm{N_2+} 15.6 eV',
                   '\mathrm{N_2} \\rightarrow \mathrm{N_2+ B^2\\Sigma}'
@@ -90,7 +90,10 @@ nitrogen_names = ['Effective',
 tex_names = {'He':helium_names, 'N2':nitrogen_names}
 
 
-def plot_barh(data, title, indexes, filename, cross_sections):
+def plot_barh(top_data, title, filename, cross_sections, data_max):
+
+    data = [i[0] for i in top_data]
+    indexes =  [i[1] for i in top_data]
 
     pos = np.arange(len(data)) + 0.5
 
@@ -106,23 +109,22 @@ def plot_barh(data, title, indexes, filename, cross_sections):
     for num in indexes:
         bar_label.append(r'$' + cross_sections[num] + '$')
 
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    #ax.xaxis.set_major_locator(MaxNLocator(symmetric=True))
     if data:
-        data_max = max(data)
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        #ax.xaxis.set_major_locator(MaxNLocator(symmetric=True))
         ax.set_xlim(xmax=data_max*1.01)
         ax.set_xticks(np.linspace(0, data_max*1.01, 7))
-    ax.barh(pos, data, color=colour)
-    plt.title(title)
-    ax.set_yticks(pos + 0.0)
-    ax.set_yticklabels(bar_label)
-    for item in ([ax.title, ax.xaxis.label, ax.yaxis.label] +
-                 ax.get_xticklabels() + ax.get_yticklabels()):
-        item.set_fontsize(12)
-    fig.tight_layout()
-    plt.savefig(filename)
-    plt.close()
+        ax.barh(pos, data, color=colour)
+        plt.title(title)
+        ax.set_yticks(pos + 0.0)
+        ax.set_yticklabels(bar_label)
+        for item in ([ax.title, ax.xaxis.label, ax.yaxis.label] +
+                     ax.get_xticklabels() + ax.get_yticklabels()):
+            item.set_fontsize(12)
+        fig.tight_layout()
+        plt.savefig(filename)
+        plt.close()
     return
 
 
@@ -141,13 +143,25 @@ def extract_data(data_line, num_bars):
     index_list = list(map(itemgetter(0), heapq.nlargest(num_bars, enumerate(data), key=itemgetter(1))))
 
     top_data = []
-    usuable_indexes = []
     for i in index_list:
         if data[i] != 0:
-            top_data.append(data[i])
-            usuable_indexes.append(i)
+            top_data.append([data[i], i])
 
-    return E_over_N, usuable_indexes, top_data
+    if top_data:
+        max_value = max(top_data)[0]
+    else:
+        return None, None, None
+
+    too_small_sets = []
+
+    for set in top_data:
+        if set[0] < max_value*0.01:
+            too_small_sets.append(set)
+
+    for small_set in too_small_sets:
+        top_data.remove(small_set)
+
+    return E_over_N, top_data, max_value
 
 
 def create_barchart(stats_file, species, coef_index, filename, num_bars):
@@ -161,30 +175,30 @@ def create_barchart(stats_file, species, coef_index, filename, num_bars):
     data_file = open(stats_file, 'r')
     lines = data_file.readlines()
 
-    if coef_index != 0:
-        coef_sort = coef_index
-    else:
-        coef_sort = coef_index
-
     data_file.close()
+    lines.append("")
+    lines.append("")
 
-    coef_data = lines[coef_sort*21:(coef_sort+1)*21]  # Extract coef data
+    coef_data = lines[coef_index*21:(coef_index+1)*21]  # Extract coef data
 
     cross_sections = tex_names[species]
 
     if coef_index in [0, 1, 2]:
         title = coef_data[0].strip()    # Extract coefs name
-    elif coef_index == 3:
-        title = r'$' + cross_sections[0] + '$' + " Collision"
+    elif coef_index == 3 and species == 'N2':
+        title = r'$' + cross_sections[1] + '$' + " Transition"
     else:
-        title = "Rate Coef. for " + r'$' + cross_sections[coef_index-3] + '$'
+        title = "Rate Coef. for " + r'$' + cross_sections[coef_index-2] + '$'
 
     for data_line in coef_data[4:11]:
 
-        E_over_N, index_list, top_data = extract_data(data_line, num_bars)
-        new_filename = filename + "_" + E_over_N
+        E_over_N, top_data, max_value = extract_data(data_line, num_bars)
 
-        plot_barh(top_data, title, index_list, new_filename, cross_sections)
+        if max_value is None:
+            continue
+
+        new_filename = filename + "_" + E_over_N
+        plot_barh(top_data, title, new_filename, cross_sections, max_value)
 
     return
 
