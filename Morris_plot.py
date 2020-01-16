@@ -1,5 +1,6 @@
 import heapq
 from operator import itemgetter
+from itertools import cycle
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import numpy as np
@@ -113,9 +114,9 @@ def plot_barh(top_data, title, filename, cross_sections, data_max):
     if data:
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        #ax.xaxis.set_major_locator(MaxNLocator(symmetric=True))
-        #ax.set_xlim(xmax=data_max*1.01)
-        #ax.set_xticks(np.linspace(0, data_max*1.01, 7))
+        # ax.xaxis.set_major_locator(MaxNLocator(symmetric=True))
+        # ax.set_xlim(xmax=data_max*1.01)
+        # ax.set_xticks(np.linspace(0, data_max*1.01, 7))
         ax.set_xticks(np.linspace(0, 1, 5))
         ax.barh(pos, data, color=colour)
         plt.title(title)
@@ -130,7 +131,7 @@ def plot_barh(top_data, title, filename, cross_sections, data_max):
     return
 
 
-def extract_data(data_line, num_bars):
+def extract_data(data_line, num_bars, norm=True):
 
     data = data_line.split()
 
@@ -146,7 +147,6 @@ def extract_data(data_line, num_bars):
 
     top_data = []
     for i in index_list:
-
         if data[i] != 0:
             top_data.append([data[i], i])
 
@@ -168,14 +168,14 @@ def extract_data(data_line, num_bars):
         top_data.remove(small_set)
 
     # Normalisation to max value
-    for i in range(len(top_data)):
-        top_data[i][0] /= max_value
-
+    if norm:
+        for i in range(len(top_data)):
+            top_data[i][0] /= max_value
 
     return E_over_N, top_data, max_value
 
 
-def create_barchart(stats_file, species, coef_index, filename, num_bars):
+def create_barchart(stats_file, species, coef_index, filename, num_bars, type='bar'):
 
     data_dir = dirname(stats_file)
     graph_dir = data_dir + "/Bar_charts"
@@ -201,15 +201,61 @@ def create_barchart(stats_file, species, coef_index, filename, num_bars):
     else:
         title = "Rate Coef. for " + r'$' + cross_sections[coef_index-2] + '$'
 
-    for data_line in coef_data[4:11]:
+    if type == 'bar':
+        for data_line in coef_data[4:11]:
 
-        E_over_N, top_data, max_value = extract_data(data_line, num_bars)
+            E_over_N, top_data, max_value = extract_data(data_line, num_bars)
 
-        if max_value is None:
-            continue
+            if max_value is None:
+                continue
 
-        new_filename = filename + "_" + E_over_N
-        plot_barh(top_data, title, new_filename, cross_sections, max_value)
+            new_filename = filename + "_" + E_over_N
+            plot_barh(top_data, title, new_filename, cross_sections, max_value)
+
+    elif type == 'scatter':
+        for data_lines in zip(coef_data[4:11],coef_data[13:20]):
+            E_over_N, data_set, max_value = extract_data(data_lines[0], num_bars, norm=False)
+
+            if max_value is None:
+                continue
+
+            raw_std_data = data_lines[1].split()
+            raw_std_data.pop(0)
+            raw_std_data = [float(item) for item in raw_std_data]
+
+            indexes = [i[1] for i in data_set]
+
+            mean_data = [i[0] for i in data_set]
+            std_data = itemgetter(*indexes)(raw_std_data)
+            if isinstance(std_data, tuple):
+                std_data = list(std_data)
+            elif isinstance(std_data, float):
+                std_data = [std_data]
+
+            for i in range(len(mean_data)):
+                mean_data[i] /= max_value
+                std_data[i] /= max_value
+
+            plot_labels = [cross_sections[num] for num in indexes]
+
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            ax.set_xticks(np.linspace(0, 1, 5))
+
+            plt.title(title)
+
+            for i, marker in zip(range(len(mean_data)), cycle('.^sP*Dx1')):
+                ax.scatter(mean_data[i], std_data[i], s=100, label=('$' + plot_labels[i] + '$'), marker=marker)
+
+            ax.legend()
+            fig.tight_layout()
+
+            new_filename = filename + "_" + E_over_N
+            plt.savefig(new_filename)
+
+            plt.close()
+    else:
+        return print("Plot type invalid. Please enter either \"bar\" or \"scatter\" for type.")
 
     return
 
