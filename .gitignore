@@ -1,0 +1,12 @@
+# Old files
+MCMU-old.py
+
+# Unsued files
+.idea/*
+bolsiglog.txt
+data/*
+
+# Install files
+Plotting/.idea/*
+Plotting/__pycache__/*
+Plotting/morris_plot.egg-info/*

@@ -95,7 +95,7 @@ tex_names = {'He':helium_names, 'N2':nitrogen_names}
 def plot_barh(top_data, title, filename, cross_sections, data_max):
 
     data = [i[0] for i in top_data]
-    indexes =  [i[1] for i in top_data]
+    indexes = [i[1] for i in top_data]
 
     pos = np.arange(len(data)) + 0.5
 
@@ -175,13 +175,9 @@ def extract_data(data_line, num_bars, norm=True):
     return E_over_N, top_data, max_value
 
 
-def create_barchart(stats_file, species, coef_index, filename, num_bars, type='bar'):
+def create_plot(stats_file, species, coef_index, filename, num_bars, type='bar'):
 
     data_dir = dirname(stats_file)
-    graph_dir = data_dir + "/Bar_charts"
-    if not isdir(graph_dir):
-        makedirs(graph_dir)
-    filename = graph_dir + "/" + filename
 
     data_file = open(stats_file, 'r')
     lines = data_file.readlines()
@@ -202,6 +198,12 @@ def create_barchart(stats_file, species, coef_index, filename, num_bars, type='b
         title = "Rate Coef. for " + r'$' + cross_sections[coef_index-2] + '$'
 
     if type == 'bar':
+
+        graph_dir = data_dir + "/Bar_charts"
+        if not isdir(graph_dir):
+            makedirs(graph_dir)
+        filename = graph_dir + "/" + filename
+
         for data_line in coef_data[4:11]:
 
             E_over_N, top_data, max_value = extract_data(data_line, num_bars)
@@ -213,7 +215,13 @@ def create_barchart(stats_file, species, coef_index, filename, num_bars, type='b
             plot_barh(top_data, title, new_filename, cross_sections, max_value)
 
     elif type == 'scatter':
-        for data_lines in zip(coef_data[4:11],coef_data[13:20]):
+
+        graph_dir = data_dir + "/Scatter_plots"
+        if not isdir(graph_dir):
+            makedirs(graph_dir)
+        filename = graph_dir + "/" + filename
+
+        for data_lines in zip(coef_data[4:11], coef_data[13:20]):
             E_over_N, data_set, max_value = extract_data(data_lines[0], num_bars, norm=False)
 
             if max_value is None:
