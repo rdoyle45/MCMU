@@ -177,7 +177,6 @@ def extract_data(data_line, num_bars, norm=True):
 
 def create_barchart(stats_file, species, coef_index, filename, num_bars, type='bar'):
 
-    print("lol")
     data_dir = dirname(stats_file)
     graph_dir = data_dir + "/Bar_charts"
     if not isdir(graph_dir):
