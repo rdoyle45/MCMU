@@ -72,11 +72,11 @@ nitrogen_names = ['Effective',
                   '\mathrm{N_2} \\rightarrow Vib. 1.76 eV',
                   '\mathrm{N_2} \\rightarrow Vib. 2.06 eV',
                   '\mathrm{N_2} \\rightarrow Vib. 2.35 eV',
-                  '\mathrm{N_2} \\rightarrow \mathrm{A ^3\\Sigma} 6.17 eV',
-                  '\mathrm{N_2} \\rightarrow \mathrm{A ^3\\Sigma} 7 eV',
+                  '\mathrm{N_2} \\rightarrow \mathrm{A ^3\\Sigma}\\: 6.17 eV',
+                  '\mathrm{N_2} \\rightarrow \mathrm{A ^3\\Sigma}\\: 7 eV',
                   '\mathrm{N_2} \\rightarrow \mathrm{B ^3\\Pi}',
                   '\mathrm{N_2} \\rightarrow \mathrm{w ^3\\Delta}',
-                  '\mathrm{N_2} \\rightarrow \mathrm{A ^3\\Sigma} 7.8 eV',
+                  '\mathrm{N_2} \\rightarrow \mathrm{A ^3\\Sigma}\\: 7.8 eV',
                   '\mathrm{N_2} \\rightarrow \mathrm{B\' ^3\\Sigma}',
                   '\mathrm{N_2} \\rightarrow \mathrm{a\' ^1\\Sigma}',
                   '\mathrm{N_2} \\rightarrow \mathrm{a ^1\\Pi}',
@@ -85,7 +85,7 @@ nitrogen_names = ['Effective',
                   '\mathrm{N_2} \\rightarrow \mathrm{E ^3\\Sigma}',
                   '\mathrm{N_2} \\rightarrow \\mathrm{a\" ^1\\Sigma}',
                   '\mathrm{N_2} \\rightarrow \mathrm{Ex. Sum}',
-                  '\mathrm{N_2} \\rightarrow \mathrm{N_2+} 15.6 eV',
+                  '\mathrm{N_2} \\rightarrow \mathrm{N_2+}\\: 15.6 eV',
                   '\mathrm{N_2} \\rightarrow \mathrm{N_2+ B^2\\Sigma}'
                 ]
 
@@ -175,7 +175,7 @@ def extract_data(data_line, num_bars, norm=True):
     return E_over_N, top_data, max_value
 
 
-def create_plot(stats_file, species, coef_index, filename, num_bars, type='bar'):
+def create_plot(stats_file, species, coef_index, filename, num_bars=8, type='bar'):
 
     data_dir = dirname(stats_file)
 
@@ -249,6 +249,8 @@ def create_plot(stats_file, species, coef_index, filename, num_bars, type='bar')
             fig = plt.figure()
             ax = fig.add_subplot(111)
             ax.set_xticks(np.linspace(0, 1, 5))
+            ax.set_xlabel(r'Normalised $\mathrm{\mu^*}$')
+            ax.set_ylabel(r'Normalised $\mathrm{\sigma}$')
 
             plt.title(title)
 
@@ -259,7 +261,7 @@ def create_plot(stats_file, species, coef_index, filename, num_bars, type='bar')
             fig.tight_layout()
 
             new_filename = filename + "_" + E_over_N
-            plt.savefig(new_filename)
+            plt.savefig(new_filename, dpi=600)
 
             plt.close()
     else:
