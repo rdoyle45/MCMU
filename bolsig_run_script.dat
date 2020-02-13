@@ -15,8 +15,8 @@ VAR       / Electric field / N (Td)
 0.        / Angular field frequency / N (m3/s)
 0.        / Cosine of E-B field angle
 300.      / Gas temperature (K)
-0.        / Excitation temperature (K)
-0.0      / Transition energy (eV)
+3521.       / Excitation temperature (K)
+0.29      / Transition energy (eV)
 0        / Ionization degree
 1e10      / Plasma density (1/m3)
 1.        / Ion charge parameter
