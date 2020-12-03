@@ -6,7 +6,7 @@
 /READCOLLISIONS can be called multiple times to read from different files
 
 READCOLLISIONS
-/ File 
+/ File
 / Species
 1                    / Extrapolate: 0= No 1= Yes
 
@@ -15,8 +15,8 @@ VAR       / Electric field / N (Td)
 0.        / Angular field frequency / N (m3/s)
 0.        / Cosine of E-B field angle
 300.      / Gas temperature (K)
-3521.       / Excitation temperature (K)
-0.29      / Transition energy (eV)
+0.        / Excitation temperature (K)
+0.0      / Transition energy (eV)
 0        / Ionization degree
 1e10      / Plasma density (1/m3)
 1.        / Ion charge parameter
@@ -24,14 +24,14 @@ VAR       / Electric field / N (Td)
 0         / e-e momentum effects: 0=No; 1=Yes*
 1         / Energy sharing: 1=Equal*; 2=One takes all
 1         / Growth: 1=Temporal*; 2=Spatial; 3=Not included; 4=Grad-n expansion
-0.        / Maxwellian mean energy (eV) 
-200       / # of grid points
-0         / Manual grid: 0=No; 1=Linear; 2=Parabolic 
+0.        / Maxwellian mean energy (eV)
+300       / # of grid points
+0         / Manual grid: 0=No; 1=Linear; 2=Parabolic
 200.      / Manual maximum energy (eV)
-1e-9     / Precision
+1e-10     / Precision
 1e-8      / Convergence
 1000      / Maximum # of iterations
-1.0       / Gas composition fractions       
+1.0       / Gas composition fractions
 1         / Normalize composition to unity: 0=No; 1=Yes
 
 RUNSERIES
@@ -43,14 +43,14 @@ RUNSERIES
 /SAVERESULTS can be called multiple times to write in different formats
 
 SAVERESULTS
-/ Output File 
+/ Output File
 3        / Format: 1=Run by run; 2=Combined; 3=E/N; 4=Energy; 5=SIGLO; 6=PLASIMO
 1        / Conditions: 0=No; 1=Yes
 1        / Transport coefficients: 0=No; 1=Yes
 1        / Rate coefficients: 0=No; 1=Yes
 0        / Reverse rate coefficients: 0=No; 1=Yes
 1        / Energy loss coefficients: 0=No; 1=Yes
-1        / Distribution function: 0=No; 1=Yes 
+1        / Distribution function: 0=No; 1=Yes
 0        / Skip failed runs: 0=No; 1=Yes
 1        / Include cross sections: 0=No; 1=Yes
 
