@@ -1159,13 +1159,13 @@ def bolsig_file_morris(filename, cwd, og_cwd, species_name, num_EN_values):
     for i in range(len(linelist)):
 
         # Finding the Input filename
-        if linelist[i].find('/ File ') != -1:
+        if linelist[i].find('/ File') != -1:
             inputlocation = i
         # Finding the output file name
         elif linelist[i].find('/ Species') != -1:
             species = i
         # Finding the output file name
-        elif linelist[i].find('/ Output File ') != -1:
+        elif linelist[i].find('/ Output File') != -1:
             outputlocation = i
         elif linelist[i].find('/ Number') != -1:
             num_EN_loc = i
