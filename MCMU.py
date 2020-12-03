@@ -321,7 +321,7 @@ def data_edit(cs_data, lognorm_set, oldfile, cwd, dashsec, num_uncert, comsec, c
 
     chdir(cwd2)
 
-    cwd3 = join(cwd2, 'Input Files')
+    cwd3 = join(cwd2, 'Input_Files')
     makedirs(cwd3)
 
     progressbar = Bar('Generating Datasets ', max=num_uncert, suffix='%(percent)d%%')
@@ -382,7 +382,7 @@ def data_edit(cs_data, lognorm_set, oldfile, cwd, dashsec, num_uncert, comsec, c
 # Creating the input file for Bolsig minus
 def bolsig_file(inputdir, cwd, og_cwd, species_name, num_EN_values):
     # Making a directory for the run files for Bolsig
-    makedirs('BOLSIG Run Files')
+    makedirs('BOLSIG_Run_Files')
 
     # Opening the template runfile
     file = open(join(og_cwd, 'bolsig_run_script.dat'), "r+", encoding='utf8')
@@ -403,11 +403,11 @@ def bolsig_file(inputdir, cwd, og_cwd, species_name, num_EN_values):
     for i in range(len(linelist)):
 
         # Finding the Input filename
-        if linelist[i].find('/ File ') != -1:
+        if linelist[i].find('/ File') != -1:
             inputlocation = i
         elif linelist[i].find('/ Species') != -1:
             species = i
-        elif linelist[i].find('/ Output File ') != -1:
+        elif linelist[i].find('/ Output File') != -1:
             outputlocation = i
         elif linelist[i].find('/ Number') != -1:
             num_EN_loc = i
@@ -419,7 +419,7 @@ def bolsig_file(inputdir, cwd, og_cwd, species_name, num_EN_values):
     for inputfile in dir_list:
 
         runfilename = ('run_' + inputfile)
-        runfile = ('BOLSIG Run Files/' + runfilename)
+        runfile = ('BOLSIG_Run_Files/' + runfilename)
 
         # Opening the runfile in a writable capacity
         with open(runfile, 'w', encoding='utf8') as f:
