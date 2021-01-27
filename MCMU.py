@@ -450,7 +450,6 @@ def bolsig_minus(cwd, bolsig, num_cpus):
 
     # Gets list of runfiles
     infile_list = glob.glob(str(cwd)+"/BOLSIG_Run_Files/run*")
-    print(infile_list)
 
     progressbar = Bar('Running BOLSIG- ', max=len(infile_list), suffix='%(percent)d%%')
 
