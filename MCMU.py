@@ -1,3 +1,4 @@
+import re
 from os import getcwd, chdir, makedirs, listdir, remove
 from os.path import join, exists
 from numpy import random as rd, empty, format_float_scientific as f_f, zeros, nonzero, divide, sqrt, seterr
@@ -1246,6 +1247,7 @@ def morris_stats(file_list, inputdir, sample_set, delta, num_EN_val, num_params)
     mean = {}
     std = {}
     energy = zeros(num_EN_val)
+    flag = False
 
     # Interating through each created directory in Input Files
     for keys, num in zip(file_list, sample_set):
@@ -1275,6 +1277,16 @@ def morris_stats(file_list, inputdir, sample_set, delta, num_EN_val, num_params)
             file_1 = open(filename_1, 'r', encoding='utf8').read().splitlines()
             file_2 = open(filename_2, 'r', encoding='utf8').read().splitlines()
 
+            for line in file_1:
+                if re.search("Error code", line):
+                    logging.debug('Error code in ' + filename_1 + ", unable to calculate stats.")
+                    flag = True
+            for line in file_2:
+                if re.search("Error code", line):
+                    logging.debug('Error code in ' + filename_2 + ", unable to calculate stats.")
+                    flag = True
+            if flag:
+                continue
             # Searching the first file for the location of mobility data
             # This is only done once as each file is of the exact same format
             if mob_start == 0:
@@ -1295,14 +1307,15 @@ def morris_stats(file_list, inputdir, sample_set, delta, num_EN_val, num_params)
                         continue
 
             for stat, stat_name in zip([mob_start, diff_start, ion_start, excite_rate, ion_rate], ['mob', 'dif', 'ion', 'excite_rate', 'ion_rate']):
-
+                print("File1=", filename_1)
+                print("File2=", filename_2)
                 if isinstance(stat, list):
                     stat_list = stat
                     stat_list_name = stat_name
                     for i in range(len(stat_list)):
                         stat_name = stat_list_name + "_{}".format(i)
                         stat = stat_list[i]
-
+                        print("Line=",stat)
                         # Iterating through each line of mobility data
                         for k in range(num_EN_val):
 
@@ -1372,7 +1385,7 @@ def morris_stats(file_list, inputdir, sample_set, delta, num_EN_val, num_params)
                 else:
                     # Iterating through each line of mobility data
                     for k in range(num_EN_val):
-
+                        print("Line=", stat)
                         # extracting energy and mobility values
                         E, stat_1 = file_1[stat + k + 1].split('\t')
                         E, stat_2 = file_2[stat + k + 1].split('\t')
