@@ -1247,7 +1247,6 @@ def morris_stats(file_list, inputdir, sample_set, delta, num_EN_val, num_params)
     mean = {}
     std = {}
     energy = zeros(num_EN_val)
-    flag = False
 
     # Interating through each created directory in Input Files
     for keys, num in zip(file_list, sample_set):
@@ -1260,7 +1259,7 @@ def morris_stats(file_list, inputdir, sample_set, delta, num_EN_val, num_params)
         # Iterate over the one less than the number of input file, so as to take the the changes between each
         # trajectory point
         for i in range(len(input_files)-1):
-
+            flag = False
             # Setting up two files being tested
             filename_1 = 'output_' + input_files[i]
             filename_2 = 'output_' + input_files[i+1]
