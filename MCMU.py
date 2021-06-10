@@ -1306,15 +1306,14 @@ def morris_stats(file_list, inputdir, sample_set, delta, num_EN_val, num_params)
                         continue
 
             for stat, stat_name in zip([mob_start, diff_start, ion_start, excite_rate, ion_rate], ['mob', 'dif', 'ion', 'excite_rate', 'ion_rate']):
-                print("File1=", filename_1)
-                print("File2=", filename_2)
+
                 if isinstance(stat, list):
                     stat_list = stat
                     stat_list_name = stat_name
                     for i in range(len(stat_list)):
                         stat_name = stat_list_name + "_{}".format(i)
                         stat = stat_list[i]
-                        print("Line=",stat)
+
                         # Iterating through each line of mobility data
                         for k in range(num_EN_val):
 
