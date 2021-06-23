@@ -1,0 +1,246 @@
+LXCat, www.lxcat.net
+Generated on 22 Mar 2019. All rights reserved.
+
+RECOMMENDED REFERENCE FORMAT
+- Dutton database, www.lxcat.net, retrieved on March 22, 2019.
+- IST-Lisbon database, www.lxcat.net, retrieved on March 22, 2019.
+- LAPLACE database, www.lxcat.net, retrieved on March 22, 2019.
+Be aware that some databases and solvers can additionally have instructions how to reference corresponding data.
+Please check below in the headers of databases.
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+DATABASE:         Dutton database
+PERMLINK:         www.lxcat.net/Dutton
+DESCRIPTION:      This is an experimental database which includes, at present,  data for rare gases from J. Dutton,
+                  “Survey of Electron Swarm Data”, J. Phys. Chem. Ref. Data, 4, 577, 1975.  This publication also
+                  includes data for molecular gases, and their transcription into this database is in progress.  
+                  These data were imported into LXCat by Sanchita Chowdhury, LAPLACE, Toulouse, France, 2010-2011.
+HOW TO REFERENCE: Jack Dutton, “Survey of Electron Swarm Data”, J. Phys. Chem. Ref. Data, 4, 577, 1975
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+************************************************************************************************************************
+
+COMMENT: Summary of Experimental result of following authors.
+         Anderson, J. M., Phys. Fluids, 7, 1517 (1964)
+         Chanin, L. M. Rork, G. D., Phys. Rev. 133, A1005 (1964) 
+         Crompton, R. W., Elford, M. T., Jory, R. L., Australian J. Phys. 20, 369 (1967)
+         Davies, D. K., Llewellyn-Jones, F., Morgan, C. G., Proc. Phys. Soc. London, 80, 898 (1962)
+         Pack, J. L., Phelps, A. V., Phys. Rev., 121, 798 (1961)
+         Phelps, A. V., Pack, J. L., Frost, L. S., Phys. Rev. 117, 470 (1960)
+         Townsend, J. S., Bailey, V. A. ,Phil. Mag. 46, 657 (1923), data taken at 288K
+         Stern, in Proceedings of the sixth International Conference on Ionization Phenomena in Gases (Paris, 8-13 July 1963) P.
+         Hubert and E Cremieu-Alcan, eds. (Serma, Paris, 1963), Vol. 1, p. 331
+         Wagner, E. B., Davis, F. J., Hurst, G. S., J. Chem. Phys. 47, 3138 (1967)
+         Warren, R. W., Parker, J. H., Phys. Rev. 128, 2661 (1962), data taken at 300K.
+
+********************************************************** He **********************************************************
+
+SPECIES: e / He
+PROCESS: Characteristic energy (D/mu)
+PARAM.:  Tgas = 300 K
+COMMENT: Warren et al 1962 (DT/mu).
+UPDATED: 2013-09-26 14:26:03
+COLUMNS: Reduced electric field (Td) | Energy (eV)
+-----------------------------
+ 1.130000e-3	2.030000e-2
+ 1.800000e-3	2.340000e-2
+ 2.830000e-3	2.560000e-2
+ 3.600000e-3	2.550000e-2
+ 5.150000e-3	2.540000e-2
+ 5.430000e-3	2.540000e-2
+ 7.200000e-3	2.600000e-2
+ 7.760000e-3	2.600000e-2
+ 8.230000e-3	2.620000e-2
+ 1.133000e-2	2.710000e-2
+ 1.177000e-2	2.660000e-2
+ 1.242000e-2	2.750000e-2
+ 1.645000e-2	2.790000e-2
+ 1.707000e-2	2.840000e-2
+ 1.773000e-2	2.800000e-2
+ 1.804000e-2	2.950000e-2
+ 1.878000e-2	2.950000e-2
+-----------------------------
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+DATABASE:         IST-Lisbon database
+PERMLINK:         www.lxcat.net/IST-Lisbon
+DESCRIPTION:      IST-Lisbon database contains up-to-date electron-neutral scattering cross sections (together with the
+                  measured swarm parameters used to validate these data), resulting from the research effort of the
+                  Group N-Plasmas Reactive: Modelling and Engineering (N-PRiME) with IPFN/IST (Instituto de Plasmas e
+                  Fusao Nuclear / Instituto Superior Tecnico), Lisbon, Portugal. The data, compiled from the literature,
+                  correspond to contributions from different authors (see detailed references in the database). For each
+                  gas the database presents a COMPLETE SET of cross sections, validated against measured swarm
+                  parameters by solving the two-term homogeneous electron Boltzmann equation. In most cases, predictions
+                  are in agreement with measurements within 1-20%, for reduced electric fields E/N ~ 1e-4 - 500 Td. To
+                  improve predictions at low E/N, some sets need to be completed with rotational cross sections, also
+                  available in the database.
+CONTACT:          LL Alves and V Guerra
+                  e-mail: llalves@@tecnico.ulisboa.pt
+HOW TO REFERENCE: L.L. Alves, ''The IST-Lisbon database on LXCat'' J. Phys. Conf. Series 2014, 565, 1
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+************************************************************************************************************************
+
+COMMENT: This is a summary of experimental results at ambient temperatures (unless otherwise stated) by different authors. 
+         Al-Amin S A and Lucas J 1987 J. Phys. D: Appl. Phys. 20 1590
+         Anderson J M 1964 Phys. Fluids 7 1517
+         Cavalleri G 1969 Phys. Rev. 179 186
+         Chanin L M and Rork G D 1964 Phys. Rev 133 A1005
+         Crompton R W, Elford M T and Jory R L 1967 Austr. J. Phys. 20 369
+         Crompton R W, Elford M T and Robertson A G 1970 Austr. J. Phys. 23 667
+         Davies D K, Llewellyn-Jones F and Morgan C G 1962 Proc. Phys. Soc. 80 898
+         Kucukarpaci H N, Saelee H T and Lucas J 1981 J. Phys. D: Appl. Phys. 14 9
+         Lakshminarasimha C S and Lucas J 1977 J. Phys. D: Appl. Phys. 10 313
+         Lakshminarasimha C S, Lucas J and Snelson R A 1975 Proc. IEE 122 1162
+         Milloy H B and Crompton R W 1977 Phys. Rev. A 15 1847
+         Pack J L and Phelps A V 1961 Phys. Rev. 121 798
+         Phelps A V, Pack J L and Frost L S 1960 Phys. Rev. 117 470
+         Stern R A 1963 Proc. 6th Int. Conf. on Physics of Ionized Gases, Paris vol 1 p 331
+         Townsend J S and Bailey V A 1923 Phil. Mag. 46 657
+         Townsend J S and MacCallum S P 1934 Phil. Mag. 17 678
+         Warren R W and Parker J H 1962 Phys. Rev. 128 2661.
+         These data were used to fit a direct cross section set for helium in paper L.L. Alves and C.M. Ferreira 1991 J. Phys. D:
+         Appl. Phys. 24 581-592.
+
+********************************************************** He **********************************************************
+
+SPECIES: e / He
+PROCESS: Characteristic energy (D/mu)
+PARAM.:  Tgas = 293 K
+COMMENT: Crompton et al 1967.
+UPDATED: 2013-09-26 15:28:38
+COLUMNS: Reduced electric field (Td) | Energy (eV)
+-----------------------------
+ 2.124000e-2	3.020000e-2
+ 2.430000e-2	3.130000e-2
+ 2.730000e-2	3.250000e-2
+ 3.030000e-2	3.370000e-2
+ 3.640000e-2	3.620000e-2
+ 4.550000e-2	4.000000e-2
+ 5.460000e-2	4.410000e-2
+ 6.070000e-2	4.680000e-2
+ 7.590000e-2	5.340000e-2
+ 9.100000e-2	6.040000e-2
+ 1.214000e-1	7.410000e-2
+ 1.517000e-1	8.740000e-2
+ 1.820000e-1	1.012000e-1
+ 2.124000e-1	1.141000e-1
+ 2.430000e-1	1.271000e-1
+ 2.730000e-1	1.405000e-1
+ 3.030000e-1	1.536000e-1
+ 3.640000e-1	1.792000e-1
+ 4.550000e-1	2.170000e-1
+ 5.460000e-1	2.545000e-1
+ 6.070000e-1	2.789000e-1
+ 7.590000e-1	3.400000e-1
+ 9.100000e-1	3.990000e-1
+ 1.214000e+0	5.200000e-1
+ 1.517000e+0	6.400000e-1
+ 1.820000e+0	7.550000e-1
+ 2.124000e+0	8.760000e-1
+ 2.430000e+0	9.960000e-1
+ 2.730000e+0	1.117000e+0
+ 3.030000e+0	1.241000e+0
+-----------------------------
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+DATABASE:         LAPLACE (measurements after 1975)
+PERMLINK:         www.lxcat.net/LAPLACE
+DESCRIPTION:      These data were extracted from articles published after the 1975 or not appearing in the review
+                  article by Dutton (and the associated “Dutton” database). The data in this database were digitized
+                  by S Chowdhury (LAPLACE, Toulouse) from figures in the publications or from data tables if tables were
+                  provided in the publications.
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+************************************************************************************************************************
+
+COMMENT: Summary of Experimental result of following authors.
+         Al-Amin, S. A. J., Lucas., J., J. Phys. D, 20 , 1590 (1987) 
+         Bowe, J. C., Physical Review, 117, 1411 (1960)
+         DallArmi, G., Brown, K. L., Purdie, P. H. and Fletcher, J., Aust. J. Phys., 45, 185 (1992)
+         Elford, M. T.,Aust. J. Phys., 27, 235, (1974) 
+         Kucukarpaci, N. H., Saelee, H. T., Lucas, J., J. phys. D, 14, 9 (1981)       
+         Lakshminarasimha, C. S., and Lucas, J., J. Phys. D., 10, 313 (1977)
+          
+         Pack, J. L., Voshall, R. E., Phelps, A. V., Kline, L. E., J. App. Phys., 71, 5363, (1992)
+         Petrovic, Z. Lj, Crompton, R. W., Aust. J. Phys., 40, 347 (1987) 
+         S. Takeda and Y. Nakamura, Trans. IEE of Jpn., 102 (1982) 491 – 498, as cited on http://dpc.nifs.ac.jp/DB/IEEJ/, and
+         compiled under the auspices of the Institute of Electrican Engineers of Japan.
+
+********************************************************** He **********************************************************
+
+SPECIES: e / He
+PROCESS: Characteristic energy (D/mu)
+COMMENT: Al-Amin et al 1987 (DT/mu).
+UPDATED: 2012-12-11 15:19:35
+COLUMNS: Reduced electric field (Td) | Energy (eV)
+-----------------------------
+ 5.650000e+1	6.520000e+0
+ 7.060000e+1	7.060000e+0
+ 8.460000e+1	9.520000e+0
+ 1.130000e+2	1.010000e+1
+ 1.410000e+2	1.110000e+1
+ 1.980000e+2	1.430000e+1
+ 2.820000e+2	1.830000e+1
+ 3.390000e+2	1.980000e+1
+ 4.230000e+2	2.090000e+1
+ 5.650000e+2	2.170000e+1
+ 7.060000e+2	1.890000e+1
+ 8.480000e+2	1.740000e+1
+ 1.130000e+3	1.640000e+1
+ 1.413000e+3	1.340000e+1
+ 1.695000e+3	1.200000e+1
+ 1.978000e+3	1.000000e+1
+ 2.260000e+3	9.180000e+0
+ 2.825000e+3	8.620000e+0
+ 3.390000e+3	6.590000e+0
+ 4.238000e+3	6.290000e+0
+ 5.650000e+3	5.140000e+0
+-----------------------------
+
+SPECIES: e / He
+PROCESS: Characteristic energy (D/mu)
+COMMENT: Lakshminarasimha et al 1977 (Low DT/mu).
+UPDATED: 2012-12-11 15:19:44
+COLUMNS: Reduced electric field (Td) | Energy (eV)
+-----------------------------
+ 3.017100e+0	8.146000e-1
+ 6.264100e+0	2.077600e+0
+ 1.448000e+1	3.747900e+0
+ 2.909200e+1	4.767800e+0
+ 4.257200e+1	6.294300e+0
+ 5.718400e+1	7.660000e+0
+ 8.384900e+1	7.495700e+0
+ 1.134200e+2	8.413000e+0
+ 1.415100e+2	8.351400e+0
+ 1.965600e+2	1.065500e+1
+ 2.264200e+2	1.171200e+1
+ 2.551100e+2	1.287600e+1
+-----------------------------
+
+SPECIES: e / He
+PROCESS: Characteristic energy (D/mu)
+PARAM.:  Tgas = 300 K
+COMMENT: Pack et al 1992 (DL/mu).
+UPDATED: 2013-09-26 15:07:09
+COLUMNS: Reduced electric field (Td) | Energy (eV)
+-----------------------------
+ 1.200000e-3	2.460000e-2
+ 2.300000e-3	2.510000e-2
+ 4.300000e-3	3.220000e-2
+ 4.600000e-3	2.480000e-2
+ 6.200000e-3	2.370000e-2
+ 9.300000e-3	2.750000e-2
+ 1.550000e-2	2.680000e-2
+ 2.140000e-2	2.560000e-2
+ 3.090000e-2	3.320000e-2
+ 3.110000e-2	3.260000e-2
+ 6.210000e-2	3.530000e-2
+ 3.094000e-1	5.830000e-2
+ 6.199000e-1	1.601000e-1
+ 1.344600e+0	3.872000e-1
+ 1.556200e+0	2.999000e-1
+ 3.112500e+0	1.079000e+0
+ 6.225000e+0	2.378800e+0
+-----------------------------
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
